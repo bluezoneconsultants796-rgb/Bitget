@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Transaction — DEMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+
+/* ── PAGE LAYOUT ─────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--navy);
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--navy-2);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.brand-icon { font-size: 22px; }
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+}
+.brand-name small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 10px 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.nav-link:hover { background: var(--blue-glow); color: var(--white); text-decoration: none; }
+.nav-link.active { background: var(--blue-glow); color: var(--blue); }
+.nav-link .n-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── MAIN AREA ───────────────────────────────────────────── */
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  height: 56px;
+  background: rgba(8,15,28,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-page-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.topbar-breadcrumb {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.session-badge {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.content {
+  flex: 1;
+  padding: 28px 32px 60px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── FORM STRUCTURE ──────────────────────────────────────── */
+.form-section {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.section-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.section-icon.blue  { background: var(--blue-glow);  border: 1px solid rgba(14,165,233,0.25); }
+.section-icon.gold  { background: var(--gold-light);  border: 1px solid rgba(245,158,11,0.25); }
+.section-icon.green { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.2); }
+.section-icon.muted { background: rgba(107,128,153,0.12); border: 1px solid rgba(107,128,153,0.2); }
+
+.section-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+.section-sublabel {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── TXN TYPE TOGGLE ─────────────────────────────────────── */
+.txn-type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.type-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.type-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.type-card-inner {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  text-align: center;
+  transition: all 0.2s;
+  background: var(--navy-3);
+}
+
+.type-card input:checked + .type-card-inner {
+  border-color: var(--blue);
+  background: var(--blue-glow);
+}
+
+.type-card.buy input:checked + .type-card-inner {
+  border-color: var(--green);
+  background: var(--green-glow);
+}
+
+.type-card.sell input:checked + .type-card-inner {
+  border-color: var(--gold);
+  background: var(--gold-light);
+}
+
+.type-icon {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.type-label {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.type-card.buy  .type-label { color: var(--green); }
+.type-card.sell .type-label { color: var(--gold); }
+
+.type-desc {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── FORM ROWS ───────────────────────────────────────────── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-label .req {
+  color: var(--red);
+  margin-left: 3px;
+}
+
+.form-label .opt {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 4px;
+}
+
+.input-wrap {
+  position: relative;
+}
+
+.input-prefix,
+.input-suffix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  pointer-events: none;
+}
+.input-prefix { left: 12px; }
+.input-suffix { right: 12px; }
+
+.input-wrap .form-input {
+  padding-left: 46px;
+}
+.input-wrap.has-suffix .form-input {
+  padding-right: 56px;
+}
+.input-wrap.prefix-short .form-input {
+  padding-left: 36px;
+}
+
+/* ── COMPUTED FIELD ──────────────────────────────────────── */
+.computed-field {
+  background: var(--navy);
+  border: 1.5px solid rgba(14,165,233,0.2);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--blue);
+  font-weight: 500;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.computed-field.empty { color: var(--muted); font-size: 13px; }
+
+/* ── AUTO TIMESTAMP ──────────────────────────────────────── */
+.auto-timestamp {
+  background: var(--navy);
+  border: 1.5px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.auto-timestamp .ts-icon { font-size: 16px; }
+.auto-timestamp .ts-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--blue);
+}
+.auto-timestamp .ts-note {
+  margin-left: auto;
+  font-size: 10px;
+  background: rgba(14,165,233,0.1);
+  border: 1px solid rgba(14,165,233,0.2);
+  color: var(--blue);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* ── SCREENSHOT UPLOAD ───────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--navy);
+  position: relative;
+}
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--blue);
+  background: var(--blue-glow);
+}
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.6; }
+.upload-label { font-size: 13px; color: var(--muted); }
+.upload-label strong { color: var(--blue); }
+
+.upload-preview {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: var(--navy);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+.upload-preview.visible { display: flex; }
+.preview-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+.preview-info { flex: 1; min-width: 0; }
+.preview-name {
+  font-size: 13px;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-size { font-size: 11px; color: var(--muted); }
+.preview-remove {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #FCA5A5;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+/* ── CLIENT LOOKUP ───────────────────────────────────────── */
+.cnic-lookup-wrap {
+  position: relative;
+}
+.cnic-lookup-result {
+  display: none;
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-top: 6px;
+  font-size: 13px;
+  gap: 8px;
+  align-items: center;
+}
+.cnic-lookup-result.visible { display: flex; }
+.cnic-result-name { color: var(--white); font-weight: 600; }
+.cnic-result-info { color: var(--muted); font-size: 11px; }
+.cnic-result-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cnic-result-badge.known { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.cnic-result-badge.flagged { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+/* ── SUBMIT SECTION ──────────────────────────────────────── */
+.submit-section {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.security-notes {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.security-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.security-note .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.security-note .dot.green { background: var(--green); }
+.security-note .dot.blue  { background: var(--blue); }
+.security-note .dot.gold  { background: var(--gold); }
+
+.submit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, var(--blue) 0%, #0284c7 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.01em;
+}
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(14,165,233,0.4);
+}
+.btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-clear {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-clear:hover { border-color: var(--red); color: #FCA5A5; }
+
+.submit-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ── SUCCESS OVERLAY ─────────────────────────────────────── */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,15,28,0.9);
+  backdrop-filter: blur(8px);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.success-overlay.show { display: flex; }
+
+.success-card {
+  background: var(--navy-2);
+  border: 1px solid rgba(16,185,129,0.4);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  animation: success-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes success-in {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.success-icon-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--green-glow);
+  border: 2px solid rgba(16,185,129,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 20px;
+}
+
+.success-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.success-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+.success-receipt {
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.sr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.sr-row:last-child { border-bottom: none; }
+.sr-key { color: var(--muted); }
+.sr-val { color: var(--white); font-weight: 600; }
+.sr-val.receipt   { color: var(--gold); font-family: var(--font-mono); font-size: 12px; }
+.sr-val.hash      { color: var(--blue); font-family: var(--font-mono); font-size: 11px; }
+.sr-val.muted-val { color: var(--muted); font-size: 12px; font-weight: 400; }
+
+.success-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.sa-btn {
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--white);
+  padding: 12px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.sa-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-glow); }
+.sa-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.sa-btn.primary:hover { background: #0891b2; }
+
+.sa-btn-full {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  padding: 8px;
+  width: 100%;
+}
+.sa-btn-full:hover { color: var(--white); }
+
+/* ── FORM VALIDATION ─────────────────────────────────────── */
+.field-error {
+  font-size: 11px;
+  color: var(--red);
+  margin-top: 4px;
+  display: none;
+}
+.field-error.show { display: block; }
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  font-size: 13.5px;
+  color: var(--white);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: toast-in 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 380px;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error   { border-left: 3px solid var(--red); }
+.toast.info    { border-left: 3px solid var(--blue); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── MOBILE NAV ──────────────────────────────────────────── */
+.mobile-nav-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(8,15,28,0.8);
+  z-index: 200;
+}
+.mobile-sidebar-overlay.show { display: block; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .mobile-nav-btn { display: flex; align-items: center; }
+  .sidebar.mobile-open {
+    display: flex;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 210;
+    animation: slide-in 0.2s ease;
+  }
+  @keyframes slide-in {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+  .content { padding: 20px 16px 60px; }
+}
+
+@media (max-width: 640px) {
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr; }
+  .txn-type-toggle { grid-template-columns: 1fr 1fr; }
+  .success-actions { grid-template-columns: 1fr; }
+  .submit-row { flex-direction: column; align-items: stretch; }
+  .submit-note { text-align: center; margin-left: 0; }
+  .security-notes { flex-direction: column; gap: 8px; }
+  .success-card { padding: 28px 20px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🏦</span>
+      <div class="brand-name">
+        <span id="sidebarBizName">Exchange</span>
+        <small>DEMS v1.0</small>
+      </div>
+    </div>
+
+    <span class="nav-section-label">Main</span>
+    <a href="dashboard.html" class="nav-link"><span class="n-icon">📊</span> Dashboard</a>
+    <a href="new-transaction.html" class="nav-link active"><span class="n-icon">➕</span> New Transaction</a>
+    <a href="transactions.html" class="nav-link"><span class="n-icon">📋</span> All Transactions</a>
+
+    <span class="nav-section-label">Clients</span>
+    <a href="clients.html" class="nav-link"><span class="n-icon">👤</span> Client KYC</a>
+
+    <span class="nav-section-label">System</span>
+    <a href="chain-integrity.html" class="nav-link"><span class="n-icon">🔗</span> Chain Integrity</a>
+    <a href="reports.html" class="nav-link"><span class="n-icon">📑</span> Reports</a>
+    <a href="settings.html" class="nav-link"><span class="n-icon">⚙️</span> Settings</a>
+
+    <div class="sidebar-footer">
+      <button class="nav-link w-full" style="border:none;cursor:pointer;background:none;width:100%;text-align:left;" id="logoutBtn">
+        <span class="n-icon">🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Area -->
+  <div class="main-area">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-nav-btn" id="mobileMenuBtn">☰</button>
+        <div>
+          <div class="topbar-page-title">New Transaction</div>
+          <div class="topbar-breadcrumb">Dashboard → New Transaction</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="session-badge" id="sessionBadge">⏱ --:--</div>
+        <div style="font-size:20px;" id="topbarBizLogo">🏦</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Page Header -->
+      <div class="mb-lg">
+        <div class="eyebrow">Phase 03 — Transaction Entry</div>
+        <h2 class="page-title">New Transaction</h2>
+        <p class="page-sub">After submission, this record is <strong style="color:var(--blue)">permanently locked</strong> into the hash chain. No edits possible.</p>
+      </div>
+
+      <!-- ── SECTION 1: Transaction Type ── -->
+      <form id="txnForm" novalidate>
+
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon blue">📌</div>
+          <div>
+            <div class="section-label">Transaction Type</div>
+            <div class="section-sublabel">Select buy or sell direction</div>
+          </div>
+        </div>
+
+        <div class="txn-type-toggle">
+          <label class="type-card buy">
+            <input type="radio" name="txn_type" value="buy" checked>
+            <div class="type-card-inner">
+              <div class="type-icon">📥</div>
+              <div class="type-label">BUY</div>
+              <div class="type-desc">Buying USDT from client<br>PKR → USDT</div>
+            </div>
+          </label>
+          <label class="type-card sell">
+            <input type="radio" name="txn_type" value="sell">
+            <div class="type-card-inner">
+              <div class="type-icon">📤</div>
+              <div class="type-label">SELL</div>
+              <div class="type-desc">Selling USDT to client<br>USDT → PKR</div>
+            </div>
+          </label>
+        </div>
+        <div class="field-error" id="err_txn_type">Please select a transaction type.</div>
+      </div>
+
+      <!-- ── SECTION 2: Amount & Rate ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon gold">💰</div>
+          <div>
+            <div class="section-label">Amount & Exchange Rate</div>
+            <div class="section-sublabel">Enter PKR amount and rate — USDT auto-calculated</div>
+          </div>
+        </div>
+
+        <div class="form-row triple">
+          <div class="form-group">
+            <label class="form-label">Amount PKR <span class="req">*</span></label>
+            <div class="input-wrap prefix-short">
+              <span class="input-prefix">₨</span>
+              <input type="number" class="form-input" id="amount_pkr" name="amount_pkr"
+                     placeholder="100000" min="1" step="any" autocomplete="off">
+            </div>
+            <div class="field-error" id="err_amount_pkr">Enter a valid PKR amount.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Exchange Rate <span class="req">*</span></label>
+            <div class="input-wrap has-suffix">
+              <input type="number" class="form-input" id="exchange_rate" name="exchange_rate"
+                     placeholder="278.50" min="0.01" step="any" style="padding-left:16px;" autocomplete="off">
+              <span class="input-suffix">PKR/USDT</span>
+            </div>
+            <div class="field-error" id="err_exchange_rate">Enter a valid exchange rate.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Amount USDT <span class="opt">(auto)</span></label>
+            <div class="computed-field empty" id="amount_usdt_display">—</div>
+          </div>
+        </div>
+
+        <!-- Amount PKR formatted display -->
+        <div id="amountReadable" style="font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:12px;font-family:var(--font-mono);display:none;">
+          ₨ <span id="amountReadableVal"></span>
+        </div>
+      </div>
+
+      <!-- ── SECTION 3: Order Reference ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon blue">🆔</div>
+          <div>
+            <div class="section-label">Order Reference</div>
+            <div class="section-sublabel">Bitget order ID and payment reference</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Bitget Order ID <span class="opt">(optional)</span></label>
+            <input type="text" class="form-input" id="order_id" name="order_id"
+                   placeholder="e.g. 1234567890123456789" autocomplete="off"
+                   style="font-family:var(--font-mono);font-size:13px;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Reference <span class="opt">(optional)</span></label>
+            <input type="text" class="form-input" id="payment_ref" name="payment_ref"
+                   placeholder="Bank ref / TID number" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 4: Client Info ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon green">👤</div>
+          <div>
+            <div class="section-label">Client Information</div>
+            <div class="section-sublabel">KYC details — SECP recommended</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Client Name <span class="opt">(optional)</span></label>
+            <input type="text" class="form-input" id="client_name" name="client_name"
+                   placeholder="Full name" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CNIC Number <span class="opt">(optional)</span></label>
+            <div class="cnic-lookup-wrap">
+              <input type="text" class="form-input" id="client_cnic" name="client_cnic"
+                     placeholder="XXXXX-XXXXXXX-X" maxlength="15" autocomplete="off"
+                     style="font-family:var(--font-mono);font-size:13px;">
+              <div class="cnic-lookup-result" id="cnicLookupResult">
+                <div>
+                  <div class="cnic-result-name" id="cnicResultName">—</div>
+                  <div class="cnic-result-info" id="cnicResultInfo">—</div>
+                </div>
+                <span class="cnic-result-badge known" id="cnicResultBadge">Known</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 5: Bank Details ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon muted">🏦</div>
+          <div>
+            <div class="section-label">Bank Details</div>
+            <div class="section-sublabel">Payment source / destination account</div>
+          </div>
+        </div>
+
+        <div class="form-row triple">
+          <div class="form-group">
+            <label class="form-label">Bank Name <span class="opt">(optional)</span></label>
+            <select class="form-input" id="bank_name" name="bank_name">
+              <option value="">— Select Bank —</option>
+              <option value="HBL">HBL</option>
+              <option value="UBL">UBL</option>
+              <option value="MCB">MCB</option>
+              <option value="ABL">ABL</option>
+              <option value="Meezan">Meezan Bank</option>
+              <option value="Faysal">Faysal Bank</option>
+              <option value="Standard Chartered">Standard Chartered</option>
+              <option value="Easypaisa">Easypaisa</option>
+              <option value="JazzCash">JazzCash</option>
+              <option value="SadaPay">SadaPay</option>
+              <option value="Nayapay">Nayapay</option>
+              <option value="Raast">Raast</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Last 4 <span class="opt">(optional)</span></label>
+            <input type="text" class="form-input" id="bank_last4" name="bank_last4"
+                   placeholder="4721" maxlength="4" autocomplete="off"
+                   style="font-family:var(--font-mono);letter-spacing:0.12em;">
+            <div class="field-error" id="err_bank_last4">Must be exactly 4 digits.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timestamp <span class="opt">(auto)</span></label>
+            <div class="auto-timestamp">
+              <span class="ts-icon">⏰</span>
+              <span class="ts-time" id="liveTimestamp">Loading…</span>
+              <span class="ts-note">AUTO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 6: Screenshot ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon muted">📎</div>
+          <div>
+            <div class="section-label">Payment Screenshot</div>
+            <div class="section-sublabel">Attach Bitget / bank transfer screenshot (optional)</div>
+          </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="screenshotInput" accept="image/*,application/pdf" title="Attach screenshot">
+          <div class="upload-icon">📸</div>
+          <div class="upload-label"><strong>Click to upload</strong> or drag & drop</div>
+          <div class="upload-label" style="font-size:11px;margin-top:4px;">PNG, JPG, PDF — max 5MB</div>
+        </div>
+
+        <div class="upload-preview" id="uploadPreview">
+          <img class="preview-thumb" id="previewThumb" src="" alt="preview">
+          <div class="preview-info">
+            <div class="preview-name" id="previewName">—</div>
+            <div class="preview-size" id="previewSize">—</div>
+          </div>
+          <button type="button" class="preview-remove" id="removeScreenshot">✕ Remove</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 7: Notes ── -->
+      <div class="form-section">
+        <div class="section-header">
+          <div class="section-icon muted">📝</div>
+          <div>
+            <div class="section-label">Notes</div>
+            <div class="section-sublabel">Any additional remarks (optional)</div>
+          </div>
+        </div>
+
+        <textarea class="form-input" id="notes" name="notes" rows="3"
+                  placeholder="Enter any additional notes about this transaction…"></textarea>
+      </div>
+
+      <!-- ── SUBMIT ── -->
+      <div class="submit-section">
+        <div class="security-notes">
+          <div class="security-note"><div class="dot green"></div> SHA-256 hash will be computed</div>
+          <div class="security-note"><div class="dot blue"></div> Linked to previous chain record</div>
+          <div class="security-note"><div class="dot gold"></div> Record permanently locked after submit</div>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <span>🔒</span> Lock & Submit Transaction
+          </button>
+          <button type="button" class="btn-clear" id="clearBtn">✕ Clear Form</button>
+          <div class="submit-note">
+            Cannot be edited<br>after submission
+          </div>
+        </div>
+      </div>
+
+      </form>
+
+    </div><!-- /content -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon-ring">✅</div>
+    <div class="success-title">Transaction Saved!</div>
+    <div class="success-sub">Record permanently locked to the hash chain.</div>
+
+    <div class="success-receipt" id="successReceipt">
+      <div class="sr-row">
+        <span class="sr-key">Receipt No</span>
+        <span class="sr-val receipt" id="srReceiptNo">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Type</span>
+        <span class="sr-val" id="srType">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Amount PKR</span>
+        <span class="sr-val" id="srAmount">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">USDT</span>
+        <span class="sr-val" id="srUsdt">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Rate</span>
+        <span class="sr-val" id="srRate">—</span>
+      </div>
+      <div class="sr-row" id="srClientRow">
+        <span class="sr-key">Client</span>
+        <span class="sr-val" id="srClient">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Timestamp</span>
+        <span class="sr-val muted-val" id="srTimestamp">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Chain #</span>
+        <span class="sr-val" id="srChain">—</span>
+      </div>
+      <div class="sr-row">
+        <span class="sr-key">Hash</span>
+        <span class="sr-val hash" id="srHash">—</span>
+      </div>
+    </div>
+
+    <div class="success-actions">
+      <button class="sa-btn primary" id="btnViewReceipt">📄 View Receipt</button>
+      <button class="sa-btn" id="btnNewTxn">➕ New Transaction</button>
+    </div>
+    <button class="sa-btn-full" id="btnGoTransactions">📋 View All Transactions →</button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Mobile sidebar overlay -->
+<div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
+
+<!-- Scripts: load order is critical -->
+<script src="db.js"></script>
+<script src="audit-log.js"></script>
+<script src="profile.js"></script>
+<script src="auth.js"></script>
+<script src="hash-engine.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════
+//  new-transaction.js — Transaction Entry Page Logic
+//  Phase 03 — DEMS
+// ══════════════════════════════════════════════════════════
+
+// ── GLOBALS ─────────────────────────────────────────────
+let _lastRecord     = null;
+let _screenshotData = null;  // base64 data URL
+let _tsInterval     = null;
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await DB.init();
+  Auth.requireAuth();
+
+  await loadProfile();
+  startTimestamp();
+  setupForm();
+  setupScreenshot();
+  setupCnicLookup();
+  setupMobileNav();
+  setupSessionTimer();
+});
+
+// ── LOAD PROFILE ─────────────────────────────────────────
+async function loadProfile() {
+  const profile = await Profile.get();
+  if (!profile) return;
+  document.getElementById('sidebarBizName').textContent =
+    profile.businessName || 'Exchange';
+  document.getElementById('topbarBizLogo').textContent =
+    profile.logo || '🏦';
+}
+
+// ── LIVE TIMESTAMP ────────────────────────────────────────
+function startTimestamp() {
+  function updateTs() {
+    const now = new Date();
+    // Display in PKT (UTC+5)
+    const pkt = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    const pad = n => String(n).padStart(2, '0');
+    const ts = `${pkt.getUTCFullYear()}-${pad(pkt.getUTCMonth()+1)}-${pad(pkt.getUTCDate())} ` +
+               `${pad(pkt.getUTCHours())}:${pad(pkt.getUTCMinutes())}:${pad(pkt.getUTCSeconds())} PKT`;
+    document.getElementById('liveTimestamp').textContent = ts;
+  }
+  updateTs();
+  _tsInterval = setInterval(updateTs, 1000);
+}
+
+// ── SESSION TIMER ─────────────────────────────────────────
+function setupSessionTimer() {
+  function updateBadge() {
+    const info = Auth.getSessionInfo();
+    if (!info) return;
+    const mins = Math.max(0, Math.floor(info.minutesRemaining));
+    const secs = Math.max(0, Math.floor((info.minutesRemaining % 1) * 60));
+    const pad = n => String(n).padStart(2, '0');
+    const badge = document.getElementById('sessionBadge');
+    badge.textContent = `⏱ ${pad(mins)}:${pad(secs)}`;
+    if (mins < 5) {
+      badge.style.borderColor = 'rgba(239,68,68,0.4)';
+      badge.style.color = 'var(--red)';
+    }
+  }
+  updateBadge();
+  setInterval(updateBadge, 1000);
+}
+
+// ── FORM SETUP ────────────────────────────────────────────
+function setupForm() {
+  const amtInput  = document.getElementById('amount_pkr');
+  const rateInput = document.getElementById('exchange_rate');
+  const usdtDisp  = document.getElementById('amount_usdt_display');
+  const amtRead   = document.getElementById('amountReadable');
+  const amtReadV  = document.getElementById('amountReadableVal');
+
+  function recalc() {
+    const amt  = parseFloat(amtInput.value)  || 0;
+    const rate = parseFloat(rateInput.value) || 0;
+
+    // USDT display
+    if (amt > 0 && rate > 0) {
+      const usdt = (amt / rate).toFixed(4);
+      usdtDisp.textContent = `${parseFloat(usdt).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} USDT`;
+      usdtDisp.classList.remove('empty');
+    } else {
+      usdtDisp.textContent = '—';
+      usdtDisp.classList.add('empty');
+    }
+
+    // PKR readable
+    if (amt > 0) {
+      amtReadV.textContent = amt.toLocaleString('en-PK');
+      amtRead.style.display = 'block';
+    } else {
+      amtRead.style.display = 'none';
+    }
+  }
+
+  amtInput.addEventListener('input', recalc);
+  rateInput.addEventListener('input', recalc);
+
+  // Bank last4 — digits only, max 4
+  document.getElementById('bank_last4').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  // CNIC format: XXXXX-XXXXXXX-X
+  document.getElementById('client_cnic').addEventListener('input', function() {
+    let val = this.value.replace(/[^0-9]/g, '');
+    if (val.length > 5)  val = val.slice(0,5)  + '-' + val.slice(5);
+    if (val.length > 13) val = val.slice(0,13) + '-' + val.slice(13);
+    this.value = val.slice(0, 15);
+  });
+
+  // Form submit
+  document.getElementById('txnForm').addEventListener('submit', handleSubmit);
+
+  // Clear button
+  document.getElementById('clearBtn').addEventListener('click', clearForm);
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    Auth.logout();
+    window.location.href = 'login.html';
+  });
+}
+
+// ── VALIDATE ─────────────────────────────────────────────
+function validateForm() {
+  let valid = true;
+
+  // Transaction type
+  const txnType = document.querySelector('input[name="txn_type"]:checked')?.value;
+  showErr('err_txn_type', !txnType);
+  if (!txnType) valid = false;
+
+  // Amount PKR
+  const amt = parseFloat(document.getElementById('amount_pkr').value);
+  const amtErr = !amt || amt <= 0;
+  showErr('err_amount_pkr', amtErr);
+  if (amtErr) valid = false;
+
+  // Exchange rate
+  const rate = parseFloat(document.getElementById('exchange_rate').value);
+  const rateErr = !rate || rate <= 0;
+  showErr('err_exchange_rate', rateErr);
+  if (rateErr) valid = false;
+
+  // Bank last4 — if entered must be 4 digits
+  const last4 = document.getElementById('bank_last4').value;
+  if (last4 && last4.length !== 4) {
+    showErr('err_bank_last4', true);
+    valid = false;
+  } else {
+    showErr('err_bank_last4', false);
+  }
+
+  return valid;
+}
+
+function showErr(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show', show);
+}
+
+// ── HANDLE SUBMIT ─────────────────────────────────────────
+async function handleSubmit(e) {
+  e.preventDefault();
+  Auth.refreshSession();
+
+  if (!validateForm()) {
+    Toast.show('Please fix the errors above.', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span>⌛</span> Hashing & Locking…';
+
+  try {
+    const formData = {
+      txn_type      : document.querySelector('input[name="txn_type"]:checked').value,
+      amount_pkr    : parseFloat(document.getElementById('amount_pkr').value),
+      exchange_rate  : parseFloat(document.getElementById('exchange_rate').value),
+      order_id      : document.getElementById('order_id').value.trim(),
+      payment_ref   : document.getElementById('payment_ref').value.trim(),
+      client_name   : document.getElementById('client_name').value.trim(),
+      client_cnic   : document.getElementById('client_cnic').value.trim(),
+      bank_name     : document.getElementById('bank_name').value,
+      bank_last4    : document.getElementById('bank_last4').value.trim(),
+      notes         : document.getElementById('notes').value.trim(),
+      screenshot_path: _screenshotData || ''
+    };
+
+    // Auto-calculate USDT
+    formData.amount_usdt = parseFloat(
+      (formData.amount_pkr / formData.exchange_rate).toFixed(6)
+    );
+
+    const result = await HashEngine.insertTransaction(formData);
+
+    if (!result.success) {
+      throw new Error(result.error || 'Insert failed');
+    }
+
+    _lastRecord = result.record;
+
+    // Update client record if CNIC provided
+    if (formData.client_cnic) {
+      await updateClientRecord(formData, result.record);
+    }
+
+    // Create receipt row in DB
+    await createReceiptRecord(result.record);
+
+    // Show success overlay
+    showSuccess(result.record);
+
+  } catch (err) {
+    console.error('Submit error:', err);
+    Toast.show('Error: ' + err.message, 'error');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>🔒</span> Lock & Submit Transaction';
+  }
+}
+
+// ── UPDATE CLIENT RECORD ──────────────────────────────────
+async function updateClientRecord(formData, record) {
+  try {
+    if (!formData.client_cnic) return;
+    const existing = await DB.get(
+      `SELECT * FROM clients WHERE cnic = ?`, [formData.client_cnic]
+    );
+    const now = new Date().toISOString();
+
+    if (existing) {
+      // Update totals
+      await DB.run(
+        `UPDATE clients SET
+           total_txns = total_txns + 1,
+           total_volume_pkr = total_volume_pkr + ?,
+           last_txn_date = ?,
+           updated_at = ?
+         WHERE cnic = ?`,
+        [formData.amount_pkr, record.timestamp, now, formData.client_cnic]
+      );
+    } else if (formData.client_name) {
+      // Auto-create client record
+      await DB.run(
+        `INSERT INTO clients
+           (cnic, full_name, bank_name, bank_last4,
+            total_txns, total_volume_pkr, first_txn_date, last_txn_date,
+            created_at, updated_at)
+         VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
+        [
+          formData.client_cnic,
+          formData.client_name,
+          formData.bank_name || '',
+          formData.bank_last4 || '',
+          formData.amount_pkr,
+          record.timestamp,
+          record.timestamp,
+          now,
+          now
+        ]
+      );
+      AuditLog.add('CLIENT_ADDED',
+        `Auto-added from txn: ${formData.client_name} (CNIC: ${formData.client_cnic})`);
+    }
+  } catch (e) {
+    console.warn('Client update warning:', e.message);
+  }
+}
+
+// ── CREATE RECEIPT RECORD ─────────────────────────────────
+async function createReceiptRecord(record) {
+  try {
+    const txnRow = await DB.get(
+      `SELECT id FROM transactions WHERE receipt_number = ?`,
+      [record.receipt_number]
+    );
+    if (!txnRow) return;
+
+    const qrData = JSON.stringify({
+      receipt: record.receipt_number,
+      hash   : record.hash.slice(0, 16) + '…',
+      ts     : record.timestamp
+    });
+
+    await DB.run(
+      `INSERT OR IGNORE INTO receipts
+         (receipt_number, txn_id, generated_at, qr_data, print_count, share_count)
+       VALUES (?, ?, ?, ?, 0, 0)`,
+      [record.receipt_number, txnRow.id, new Date().toISOString(), qrData]
+    );
+
+    AuditLog.add('RECEIPT_GENERATED',
+      `Receipt: ${record.receipt_number} | TxnID: ${txnRow.id}`);
+  } catch (e) {
+    console.warn('Receipt record warning:', e.message);
+  }
+}
+
+// ── SHOW SUCCESS ──────────────────────────────────────────
+function showSuccess(record) {
+  const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+  const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const short = h => h.slice(0, 8) + '…' + h.slice(-8);
+  const isBuy = record.txn_type === 'buy';
+  const typeLabel = isBuy ? '📥 BUY (PKR → USDT)' : '📤 SELL (USDT → PKR)';
+
+  // Format timestamp nicely
+  const dt = new Date(record.timestamp);
+  const dateStr = dt.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' });
+  const timeStr = dt.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  // Populate all fields
+  document.getElementById('srReceiptNo').textContent  = record.receipt_number;
+  document.getElementById('srType').textContent       = typeLabel;
+  document.getElementById('srAmount').textContent     = '₨ ' + fmt(record.amount_pkr);
+  document.getElementById('srUsdt').textContent       = fmtU(record.amount_usdt) + ' USDT';
+  document.getElementById('srRate').textContent       = fmt(record.exchange_rate) + ' PKR/USDT';
+  document.getElementById('srChain').textContent      = 'Chain #' + record.chain_index;
+  document.getElementById('srHash').textContent       = short(record.hash);
+  document.getElementById('srTimestamp').textContent  = dateStr + ' · ' + timeStr;
+
+  // Client name — fallback to "Walk-in Client" if not provided
+  const clientRow = document.getElementById('srClientRow');
+  const clientEl  = document.getElementById('srClient');
+  clientEl.textContent = (record.client_name && record.client_name.trim())
+    ? record.client_name
+    : 'Walk-in Client';
+  clientRow.style.display = '';
+
+  // Show the overlay
+  document.getElementById('successOverlay').classList.add('show');
+
+  // ── Button 1: View Receipt ────────────────────────────
+  document.getElementById('btnViewReceipt').onclick = () => {
+    window.location.href = 'receipt.html?receipt=' + encodeURIComponent(record.receipt_number);
+  };
+
+  // ── Button 2: New Transaction ─────────────────────────
+  document.getElementById('btnNewTxn').onclick = () => {
+    document.getElementById('successOverlay').classList.remove('show');
+    clearForm();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>🔒</span> Lock & Submit Transaction';
+  };
+
+  // ── Button: View All Transactions ─────────────────────
+  document.getElementById('btnGoTransactions').onclick = () => {
+    window.location.href = 'transactions.html';
+  };
+}
+
+// ── CLEAR FORM ────────────────────────────────────────────
+function clearForm() {
+  document.getElementById('txnForm').reset();
+  document.getElementById('amount_usdt_display').textContent = '—';
+  document.getElementById('amount_usdt_display').classList.add('empty');
+  document.getElementById('amountReadable').style.display = 'none';
+  document.getElementById('cnicLookupResult').classList.remove('visible');
+  removeScreenshot();
+  // Clear all errors
+  document.querySelectorAll('.field-error.show').forEach(e => e.classList.remove('show'));
+  _screenshotData = null;
+}
+
+// ── SCREENSHOT ────────────────────────────────────────────
+function setupScreenshot() {
+  const zone    = document.getElementById('uploadZone');
+  const input   = document.getElementById('screenshotInput');
+  const preview = document.getElementById('uploadPreview');
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) processFile(input.files[0]);
+  });
+
+  // Drag & drop
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('removeScreenshot').addEventListener('click', removeScreenshot);
+}
+
+function processFile(file) {
+  if (file.size > 5 * 1024 * 1024) {
+    Toast.show('File too large. Max 5MB.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _screenshotData = e.target.result;
+    const preview = document.getElementById('uploadPreview');
+    const thumb   = document.getElementById('previewThumb');
+    const name    = document.getElementById('previewName');
+    const size    = document.getElementById('previewSize');
+
+    if (file.type.startsWith('image/')) {
+      thumb.src = _screenshotData;
+    } else {
+      thumb.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44"><rect fill="%23152238" width="44" height="44" rx="6"/><text y="28" x="6" font-size="22">📄</text></svg>';
+    }
+    name.textContent = file.name;
+    size.textContent = (file.size / 1024).toFixed(1) + ' KB';
+    preview.classList.add('visible');
+    document.getElementById('uploadZone').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeScreenshot() {
+  _screenshotData = null;
+  document.getElementById('uploadPreview').classList.remove('visible');
+  document.getElementById('uploadZone').style.display = '';
+  document.getElementById('screenshotInput').value = '';
+  document.getElementById('previewThumb').src = '';
+}
+
+// ── CNIC LOOKUP ───────────────────────────────────────────
+function setupCnicLookup() {
+  const cnicInput = document.getElementById('client_cnic');
+  let _lookupTimer = null;
+
+  cnicInput.addEventListener('input', () => {
+    clearTimeout(_lookupTimer);
+    const val = cnicInput.value.replace(/[^0-9]/g, '');
+    if (val.length === 13) {
+      _lookupTimer = setTimeout(() => lookupCnic(cnicInput.value), 400);
+    } else {
+      document.getElementById('cnicLookupResult').classList.remove('visible');
+    }
+  });
+}
+
+async function lookupCnic(cnic) {
+  try {
+    const client = await DB.get(`SELECT * FROM clients WHERE cnic = ?`, [cnic]);
+    const result = document.getElementById('cnicLookupResult');
+    const nameEl = document.getElementById('cnicResultName');
+    const infoEl = document.getElementById('cnicResultInfo');
+    const badge  = document.getElementById('cnicResultBadge');
+
+    if (client) {
+      nameEl.textContent = client.full_name;
+      infoEl.textContent = `${client.total_txns} txns | ₨${(client.total_volume_pkr||0).toLocaleString('en-PK')} total`;
+
+      if (client.is_flagged) {
+        badge.textContent = '⚠ FLAGGED';
+        badge.className = 'cnic-result-badge flagged';
+        Toast.show(`⚠ Flagged client: ${client.flag_reason}`, 'error');
+      } else {
+        badge.textContent = 'Known';
+        badge.className = 'cnic-result-badge known';
+      }
+
+      // Auto-fill name if empty
+      const nameInput = document.getElementById('client_name');
+      if (!nameInput.value) nameInput.value = client.full_name;
+
+      // Auto-fill bank if empty
+      if (client.bank_name && !document.getElementById('bank_name').value) {
+        document.getElementById('bank_name').value = client.bank_name;
+      }
+      if (client.bank_last4 && !document.getElementById('bank_last4').value) {
+        document.getElementById('bank_last4').value = client.bank_last4;
+      }
+
+      result.classList.add('visible');
+    } else {
+      result.classList.remove('visible');
+    }
+  } catch (e) {
+    // Silently fail — client lookup is optional
+  }
+}
+
+// ── MOBILE NAV ────────────────────────────────────────────
+function setupMobileNav() {
+  const btn     = document.getElementById('mobileMenuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileSidebarOverlay');
+
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('show');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+const Toast = {
+  show(msg, type = 'info', duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    toast.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), duration);
+  }
+};
+</script>
+</body>
+</html>

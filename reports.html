@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — DEMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.app-shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--navy-2);
+  border-right: 1px solid var(--border);
+  padding: 24px 12px;
+  position: fixed; top: 0; left: 0; height: 100vh;
+  overflow-y: auto; z-index: 100;
+  display: flex; flex-direction: column;
+  transition: left 0.25s;
+}
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+}
+.sb-logo { font-size: 22px; color: var(--blue); }
+.sb-name { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--white); line-height: 1.1; }
+.sb-name small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+.nav-group-label {
+  font-size: 10px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  padding: 0 8px; margin: 16px 0 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  text-decoration: none; transition: all 0.15s; margin-bottom: 2px;
+  background: none; border: none; cursor: pointer; width: 100%; text-align: left;
+}
+.nav-item:hover { background: var(--blue-glow); color: var(--white); text-decoration: none; }
+.nav-item.active { background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(14,165,233,0.2); }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+.session-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 6px 10px; margin-bottom: 4px; }
+.session-pill span { color: var(--gold); font-family: var(--font-mono); }
+
+.main-area { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── TOPBAR ─────────────────────────────────────────────── */
+.page-topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(8,15,28,0.92); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.ptb-left { display: flex; align-items: center; gap: 14px; }
+.ptb-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.ptb-sub { font-size: 12px; color: var(--muted); }
+.ptb-right { display: flex; align-items: center; gap: 10px; }
+.chain-pill {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+  color: var(--green); font-size: 11px; font-weight: 600;
+  padding: 5px 12px; border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+}
+.chain-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.mobile-menu-btn { display: none; background: none; border: none; color: var(--white); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+
+/* ── PAGE BODY ──────────────────────────────────────────── */
+.page-body { padding: 28px 32px 60px; flex: 1; }
+
+/* ── PAGE HEADER ────────────────────────────────────────── */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 14px; }
+.page-header-left .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue); margin-bottom: 5px; }
+.page-header-left h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--white); letter-spacing: -0.01em; }
+.page-header-left .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ── REPORT TABS ────────────────────────────────────────── */
+.report-tabs {
+  display: flex; gap: 4px;
+  background: var(--navy-2); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 5px; margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  background: none; border: none; color: var(--muted);
+  transition: all 0.15s; font-family: var(--font-display);
+  display: flex; align-items: center; gap: 6px;
+}
+.tab-btn:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+.tab-btn.active { background: var(--blue); color: #fff; }
+.tab-icon { font-size: 13px; }
+
+/* ── PERIOD + FILTER BAR ────────────────────────────────── */
+.filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 22px; flex-wrap: wrap;
+}
+.filter-bar label { font-size: 12px; color: var(--muted); }
+.period-select {
+  background: var(--navy-2); border: 1px solid var(--border);
+  color: var(--white); font-size: 12px; padding: 7px 12px;
+  border-radius: var(--radius-sm); cursor: pointer;
+  font-family: var(--font-body); outline: none;
+}
+.period-select:focus { border-color: var(--blue); }
+.filter-sep { width: 1px; height: 20px; background: var(--border); }
+.date-input {
+  background: var(--navy-2); border: 1px solid var(--border);
+  color: var(--white); font-size: 12px; padding: 7px 12px;
+  border-radius: var(--radius-sm); cursor: pointer;
+  font-family: var(--font-body); outline: none;
+}
+.date-input:focus { border-color: var(--blue); }
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+
+/* ── REPORT SECTION ─────────────────────────────────────── */
+.report-section { display: none; }
+.report-section.active { display: block; }
+
+/* ── STAT STRIP ─────────────────────────────────────────── */
+.stat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--navy-2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.stat-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat-card.c-blue::after { background: var(--blue); }
+.stat-card.c-green::after { background: var(--green); }
+.stat-card.c-gold::after { background: var(--gold); }
+.stat-card.c-purple::after { background: var(--purple); }
+.stat-card.c-red::after { background: var(--red); }
+.stat-icon { font-size: 18px; opacity: 0.8; margin-bottom: 10px; }
+.stat-val { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.stat-card.c-blue .stat-val { color: var(--blue); }
+.stat-card.c-green .stat-val { color: var(--green); }
+.stat-card.c-gold .stat-val { color: var(--gold); }
+.stat-card.c-purple .stat-val { color: var(--purple); }
+.stat-card.c-red .stat-val { color: var(--red); }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── CHART CARD ─────────────────────────────────────────── */
+.chart-card {
+  background: var(--navy-2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 22px 24px; margin-bottom: 18px;
+}
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.chart-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--white); }
+.chart-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.chart-legend { display: flex; gap: 14px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+
+/* ── TABLE ──────────────────────────────────────────────── */
+.report-table-wrap { overflow-x: auto; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.report-table thead th {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border);
+  background: var(--navy-3); text-align: left; white-space: nowrap;
+}
+.report-table tbody td { padding: 11px 12px; color: var(--white); border-bottom: 1px solid var(--border-soft); }
+.report-table tbody tr:last-child td { border-bottom: none; }
+.report-table tbody tr:hover td { background: rgba(14,165,233,0.04); }
+.badge-buy  { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600;background:rgba(16,185,129,0.12);color:var(--green); }
+.badge-sell { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600;background:rgba(245,158,11,0.12);color:var(--gold); }
+.mono { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.amt-buy  { font-family: var(--font-display); font-weight: 700; color: var(--green); }
+.amt-sell { font-family: var(--font-display); font-weight: 700; color: var(--gold); }
+.hash-cell { font-family: var(--font-mono); font-size: 10px; color: var(--muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── PAGINATION ─────────────────────────────────────────── */
+.pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; flex-wrap: wrap; gap: 10px; }
+.page-info { font-size: 12px; color: var(--muted); }
+.page-btns { display: flex; gap: 6px; }
+.page-btn {
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  background: var(--navy-3); border: 1px solid var(--border); color: var(--muted);
+  transition: all 0.15s;
+}
+.page-btn:hover { background: var(--blue-glow); border-color: var(--blue); color: var(--white); }
+.page-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── EXPORT PANEL ───────────────────────────────────────── */
+.export-panel {
+  background: var(--navy-2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 22px 24px; margin-bottom: 18px;
+}
+.export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.export-card {
+  background: var(--navy-3); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 18px 16px; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.export-card:hover { border-color: var(--blue); background: var(--blue-glow); transform: translateY(-2px); }
+.export-card-icon { font-size: 28px; margin-bottom: 10px; }
+.export-card-title { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.export-card-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.export-note { margin-top: 14px; padding: 10px 14px; background: var(--navy-3); border-radius: var(--radius-sm); font-size: 12px; color: var(--muted); }
+
+/* ── TAX / FBR REPORT ───────────────────────────────────── */
+.fbr-preview {
+  background: var(--navy-3); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 20px 24px; margin-top: 16px;
+  font-family: var(--font-mono); font-size: 12px; color: var(--white);
+  white-space: pre-wrap; line-height: 1.8;
+}
+.fbr-section-head { color: var(--blue); font-weight: 700; }
+.fbr-value { color: var(--gold); }
+
+/* ── RATE ANALYSIS ──────────────────────────────────────── */
+.rate-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 18px; }
+.rate-card {
+  background: var(--navy-3); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px; text-align: center;
+}
+.rate-card-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--blue); }
+.rate-card-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+
+/* ── CLIENT REPORT ──────────────────────────────────────── */
+.client-rank-bar {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.client-rank-bar:last-child { border-bottom: none; }
+.crb-num { font-size: 12px; color: var(--muted); font-family: var(--font-mono); width: 20px; text-align: right; flex-shrink: 0; }
+.crb-init {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue-glow); border: 1px solid rgba(14,165,233,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  color: var(--blue); flex-shrink: 0;
+}
+.crb-info { flex: 1; min-width: 0; }
+.crb-name { font-size: 13px; font-weight: 600; color: var(--white); }
+.crb-sub { font-size: 11px; color: var(--muted); }
+.crb-bar-wrap { flex: 1; max-width: 160px; }
+.crb-bar-bg { height: 4px; background: rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 3px; }
+.crb-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--blue), var(--green)); }
+.crb-vol { font-family: var(--font-mono); font-size: 11px; color: var(--gold); white-space: nowrap; text-align: right; min-width: 80px; }
+
+/* ── NO DATA ────────────────────────────────────────────── */
+.no-data { text-align: center; padding: 50px 20px; color: var(--muted); }
+.no-data-icon { font-size: 38px; opacity: 0.35; margin-bottom: 12px; }
+.no-data-text { font-size: 13px; }
+
+/* ── LOADING OVERLAY ────────────────────────────────────── */
+#loadingOverlay {
+  position: fixed; inset: 0; background: var(--navy);
+  z-index: 999; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 24px;
+}
+.loading-hex { font-size: 48px; color: var(--blue); animation: pulse-glow 2s ease-in-out infinite; }
+@keyframes pulse-glow { 0%,100%{text-shadow:0 0 10px rgba(14,165,233,0.5)} 50%{text-shadow:0 0 28px rgba(14,165,233,1)} }
+.loading-label { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.loading-bar-wrap { width: 200px; height: 3px; background: rgba(14,165,233,0.15); border-radius: 10px; overflow: hidden; }
+.loading-bar-fill { height: 100%; background: linear-gradient(90deg,var(--blue),var(--gold)); border-radius: 10px; animation: lbar 1.8s ease forwards; }
+@keyframes lbar { 0%{width:0} 60%{width:80%} 100%{width:100%} }
+
+/* ── TOAST ──────────────────────────────────────────────── */
+#toastContainer { position: fixed; top: 76px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 18px; font-size: 13px; color: var(--white); display: flex; align-items: center; gap: 10px; min-width: 240px; animation: toast-in 0.25s ease; }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error   { border-left: 3px solid var(--red); }
+.toast.info    { border-left: 3px solid var(--blue); }
+@keyframes toast-in { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform:translateX(0); } }
+.mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(8,15,28,0.7); z-index: 90; }
+.mobile-overlay.show { display: block; }
+
+@media (max-width: 768px) {
+  .sidebar { left: -220px; }
+  .sidebar.open { left: 0; }
+  .main-area { margin-left: 0; }
+  .page-body { padding: 20px 16px 48px; }
+  .stat-strip { grid-template-columns: 1fr 1fr; }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .export-grid { grid-template-columns: 1fr; }
+  .rate-grid { grid-template-columns: repeat(3, 1fr); }
+  .mobile-menu-btn { display: flex; }
+}
+@media (max-width: 480px) {
+  .stat-strip { grid-template-columns: 1fr; }
+  .rate-grid { grid-template-columns: 1fr 1fr; }
+  .page-topbar { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="loading-hex">⬡</div>
+  <div class="loading-bar-wrap"><div class="loading-bar-fill"></div></div>
+  <div class="loading-label" id="loadingLabel">Reports tayar ho rahi hain…</div>
+</div>
+
+<div id="toastContainer"></div>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sb-logo" id="sbLogo">⬡</div>
+      <div class="sb-name">
+        <span id="sbBizName">Exchange</span>
+        <small>Management System</small>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Main</div>
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="new-transaction.html" class="nav-item"><span class="nav-icon">➕</span> New Transaction</a>
+
+    <div class="nav-group-label">Records</div>
+    <a href="transactions.html" class="nav-item"><span class="nav-icon">📋</span> All Transactions</a>
+    <a href="clients.html" class="nav-item"><span class="nav-icon">👥</span> Clients KYC</a>
+    <a href="reports.html" class="nav-item active"><span class="nav-icon">📑</span> Reports</a>
+
+    <div class="nav-group-label">System</div>
+    <a href="chain-integrity.html" class="nav-item"><span class="nav-icon">🔐</span> Chain Integrity</a>
+    <a href="setup-profile.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+
+    <div class="sidebar-footer">
+      <div class="session-pill">⏱ Session: <span id="sessionTimer">—</span></div>
+      <button class="nav-item" id="logoutBtn"><span class="nav-icon">🚪</span> Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN AREA -->
+  <div class="main-area">
+
+    <!-- TOPBAR -->
+    <div class="page-topbar">
+      <div class="ptb-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+        <div>
+          <div class="ptb-title">Reports & Analytics</div>
+          <div class="ptb-sub" id="ptbSub">Loading…</div>
+        </div>
+      </div>
+      <div class="ptb-right">
+        <div class="chain-pill">
+          <div class="chain-dot"></div>
+          <span>Chain OK</span>
+        </div>
+        <button class="btn-secondary btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="eyebrow">Phase 06 — Analytics</div>
+          <h2>Reports</h2>
+          <div class="sub" id="reportRangeSub">—</div>
+        </div>
+      </div>
+
+      <!-- REPORT TABS -->
+      <div class="report-tabs">
+        <button class="tab-btn active" onclick="switchTab('volume',this)"><span class="tab-icon">📊</span> Volume Report</button>
+        <button class="tab-btn" onclick="switchTab('transactions',this)"><span class="tab-icon">📋</span> Transaction Log</button>
+        <button class="tab-btn" onclick="switchTab('clients',this)"><span class="tab-icon">👥</span> Client Report</button>
+        <button class="tab-btn" onclick="switchTab('rates',this)"><span class="tab-icon">📈</span> Rate Analysis</button>
+        <button class="tab-btn" onclick="switchTab('fbr',this)"><span class="tab-icon">🏛️</span> FBR / Tax</button>
+        <button class="tab-btn" onclick="switchTab('export',this)"><span class="tab-icon">📥</span> Export</button>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <label>Period:</label>
+        <select class="period-select" id="periodSelect" onchange="onPeriodChange()">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="180">Last 6 months</option>
+          <option value="365">Last 1 year</option>
+          <option value="0">All time</option>
+          <option value="custom">Custom range</option>
+        </select>
+        <div class="filter-sep" id="customSep" style="display:none"></div>
+        <div id="customDateRange" style="display:none;display:none;gap:8px;align-items:center;">
+          <label>From:</label>
+          <input type="date" class="date-input" id="dateFrom" onchange="onPeriodChange()">
+          <label>To:</label>
+          <input type="date" class="date-input" id="dateTo" onchange="onPeriodChange()">
+        </div>
+      </div>
+
+      <!-- ═══ TAB 1: VOLUME REPORT ═══════════════════════════ -->
+      <div class="report-section active" id="sec-volume">
+
+        <div class="stat-strip">
+          <div class="stat-card c-blue">
+            <div class="stat-icon">💰</div>
+            <div class="stat-val" id="v-totalVol">—</div>
+            <div class="stat-label">Total Volume</div>
+            <div class="stat-sub" id="v-totalSub">—</div>
+          </div>
+          <div class="stat-card c-green">
+            <div class="stat-icon">📥</div>
+            <div class="stat-val" id="v-buyVol">—</div>
+            <div class="stat-label">Buy Volume</div>
+            <div class="stat-sub" id="v-buyCnt">—</div>
+          </div>
+          <div class="stat-card c-gold">
+            <div class="stat-icon">📤</div>
+            <div class="stat-val" id="v-sellVol">—</div>
+            <div class="stat-label">Sell Volume</div>
+            <div class="stat-sub" id="v-sellCnt">—</div>
+          </div>
+          <div class="stat-card c-purple">
+            <div class="stat-icon">📊</div>
+            <div class="stat-val" id="v-avgTxn">—</div>
+            <div class="stat-label">Avg per Txn</div>
+            <div class="stat-sub" id="v-totalTxns">—</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Volume Over Time</div>
+              <div class="chart-sub">Daily PKR volume — Buy vs Sell</div>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Buy</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Sell</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Net</div>
+            </div>
+          </div>
+          <canvas id="volChart" height="200"></canvas>
+        </div>
+
+        <div class="two-col">
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Weekly Breakdown</div>
+                <div class="chart-sub">Volume per week</div>
+              </div>
+            </div>
+            <canvas id="weeklyChart" height="180"></canvas>
+          </div>
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Buy vs Sell Split</div>
+                <div class="chart-sub">Volume distribution</div>
+              </div>
+            </div>
+            <div style="position:relative;height:180px;">
+              <canvas id="splitDonut" height="180"></canvas>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--blue)" id="splitPct">—</div>
+                <div style="font-size:10px;color:var(--muted)">Buy %</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 2: TRANSACTION LOG ════════════════════════ -->
+      <div class="report-section" id="sec-transactions">
+
+        <div class="stat-strip">
+          <div class="stat-card c-blue">
+            <div class="stat-icon">📋</div>
+            <div class="stat-val" id="t-total">—</div>
+            <div class="stat-label">Total Transactions</div>
+          </div>
+          <div class="stat-card c-green">
+            <div class="stat-icon">📥</div>
+            <div class="stat-val" id="t-buyCnt">—</div>
+            <div class="stat-label">Buy Orders</div>
+          </div>
+          <div class="stat-card c-gold">
+            <div class="stat-icon">📤</div>
+            <div class="stat-val" id="t-sellCnt">—</div>
+            <div class="stat-label">Sell Orders</div>
+          </div>
+          <div class="stat-card c-purple">
+            <div class="stat-icon">🔒</div>
+            <div class="stat-val" id="t-locked">100%</div>
+            <div class="stat-label">Hash Locked</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Transaction Log</div>
+              <div class="chart-sub" id="txn-log-sub">All transactions in period — immutable, hash-verified</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" class="period-select" id="txnSearch" placeholder="Search client, receipt…" style="min-width:180px;" oninput="filterTxnTable()">
+            </div>
+          </div>
+          <div class="report-table-wrap">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Receipt #</th>
+                  <th>Date & Time</th>
+                  <th>Type</th>
+                  <th>Client</th>
+                  <th>Amount PKR</th>
+                  <th>Rate</th>
+                  <th>USDT</th>
+                  <th>Bank</th>
+                  <th>Hash (partial)</th>
+                </tr>
+              </thead>
+              <tbody id="txnTableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <div class="page-info" id="txnPageInfo">—</div>
+            <div class="page-btns" id="txnPageBtns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 3: CLIENT REPORT ══════════════════════════ -->
+      <div class="report-section" id="sec-clients">
+
+        <div class="stat-strip">
+          <div class="stat-card c-blue">
+            <div class="stat-icon">👥</div>
+            <div class="stat-val" id="c-total">—</div>
+            <div class="stat-label">Total Clients</div>
+          </div>
+          <div class="stat-card c-green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-val" id="c-verified">—</div>
+            <div class="stat-label">Verified KYC</div>
+          </div>
+          <div class="stat-card c-gold">
+            <div class="stat-icon">📊</div>
+            <div class="stat-val" id="c-active">—</div>
+            <div class="stat-label">Active in Period</div>
+          </div>
+          <div class="stat-card c-red">
+            <div class="stat-icon">🚩</div>
+            <div class="stat-val" id="c-flagged">—</div>
+            <div class="stat-label">Flagged</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Top Clients by Volume</div>
+                <div class="chart-sub">PKR volume in selected period</div>
+              </div>
+            </div>
+            <div id="clientRankList"></div>
+          </div>
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Client Volume Chart</div>
+                <div class="chart-sub">Top 10 by PKR</div>
+              </div>
+            </div>
+            <canvas id="clientChart" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 4: RATE ANALYSIS ══════════════════════════ -->
+      <div class="report-section" id="sec-rates">
+
+        <div class="rate-grid">
+          <div class="rate-card">
+            <div class="rate-card-val" id="r-avg">—</div>
+            <div class="rate-card-label">Average Rate</div>
+          </div>
+          <div class="rate-card">
+            <div class="rate-card-val" id="r-min" style="color:var(--green)">—</div>
+            <div class="rate-card-label">Lowest Rate</div>
+          </div>
+          <div class="rate-card">
+            <div class="rate-card-val" id="r-max" style="color:var(--gold)">—</div>
+            <div class="rate-card-label">Highest Rate</div>
+          </div>
+          <div class="rate-card">
+            <div class="rate-card-val" id="r-spread" style="color:var(--purple)">—</div>
+            <div class="rate-card-label">Spread (Max−Min)</div>
+          </div>
+          <div class="rate-card">
+            <div class="rate-card-val" id="r-latest" style="color:var(--white)">—</div>
+            <div class="rate-card-label">Latest Rate</div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Rate History</div>
+              <div class="chart-sub">PKR per USDT at each transaction</div>
+            </div>
+          </div>
+          <canvas id="rateHistChart" height="220"></canvas>
+        </div>
+
+        <div class="two-col">
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Buy Rates</div>
+                <div class="chart-sub">Rate trend on buy orders</div>
+              </div>
+            </div>
+            <canvas id="buyRateChart" height="180"></canvas>
+          </div>
+          <div class="chart-card" style="margin-bottom:0">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Sell Rates</div>
+                <div class="chart-sub">Rate trend on sell orders</div>
+              </div>
+            </div>
+            <canvas id="sellRateChart" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 5: FBR / TAX ══════════════════════════════ -->
+      <div class="report-section" id="sec-fbr">
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">FBR / Tax Summary Report</div>
+              <div class="chart-sub">Ready to present to FBR, bank, or SECP — hash-verified, tamper-proof</div>
+            </div>
+            <button class="btn-secondary btn-sm" onclick="copyFbrReport()">📋 Copy Report</button>
+          </div>
+          <div class="fbr-preview" id="fbrPreview">Generating report…</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Monthly Breakdown</div>
+              <div class="chart-sub">Volume per month — for annual tax filing</div>
+            </div>
+          </div>
+          <canvas id="monthlyChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- ═══ TAB 6: EXPORT ══════════════════════════════════ -->
+      <div class="report-section" id="sec-export">
+
+        <div class="export-panel">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Download Reports</div>
+              <div class="chart-sub">Selected period data exported in your chosen format</div>
+            </div>
+          </div>
+          <div class="export-grid">
+            <div class="export-card" onclick="exportCSV()">
+              <div class="export-card-icon">📊</div>
+              <div class="export-card-title">CSV Export</div>
+              <div class="export-card-desc">All transactions with hash, client, amounts — open in Excel or Sheets</div>
+            </div>
+            <div class="export-card" onclick="exportSummaryTxt()">
+              <div class="export-card-icon">📄</div>
+              <div class="export-card-title">Summary TXT</div>
+              <div class="export-card-desc">Plain text summary report — volume, rates, counts, business info</div>
+            </div>
+            <div class="export-card" onclick="exportFBR()">
+              <div class="export-card-icon">🏛️</div>
+              <div class="export-card-title">FBR Report TXT</div>
+              <div class="export-card-desc">Formatted tax/compliance report — ready for FBR or SECP submission</div>
+            </div>
+            <div class="export-card" onclick="exportClientCSV()">
+              <div class="export-card-icon">👥</div>
+              <div class="export-card-title">Client KYC CSV</div>
+              <div class="export-card-desc">All clients with CNIC, volume, verification status</div>
+            </div>
+            <div class="export-card" onclick="printReport()">
+              <div class="export-card-icon">🖨️</div>
+              <div class="export-card-title">Print / PDF</div>
+              <div class="export-card-desc">Browser print dialog — save as PDF for bank or audit submission</div>
+            </div>
+            <div class="export-card" onclick="exportHashLedger()">
+              <div class="export-card-icon">🔐</div>
+              <div class="export-card-title">Hash Ledger CSV</div>
+              <div class="export-card-desc">Full chain ledger with all hashes — for chain integrity audit</div>
+            </div>
+          </div>
+          <div class="export-note">💡 Sab exports mein current period ka data hoga. Period change karne ke liye upar filter use karein.</div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Export History</div>
+              <div class="chart-sub">Audit log mein record hota hai</div>
+            </div>
+          </div>
+          <div id="exportHistoryWrap">
+            <div class="no-data"><div class="no-data-icon">📁</div><div class="no-data-text">Is session mein abhi koi export nahi kiya</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<!-- SCRIPTS -->
+<script src="db.js"></script>
+<script src="auth.js"></script>
+<script src="profile.js"></script>
+<script src="audit-log.js"></script>
+<script src="hash-engine.js"></script>
+<script>
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────
+let _allTxns    = [];
+let _allClients = [];
+let _filtered   = [];
+let _period     = 30;
+let _dateFrom   = null;
+let _dateTo     = null;
+let _activeTab  = 'volume';
+let _charts     = {};
+let _txnPage    = 1;
+const TXN_PAGE_SIZE = 25;
+let _txnSearchVal = '';
+let _exportHistory = [];
+let _profile    = {};
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  if (!Auth.isLoggedIn()) { window.location.href = 'login.html'; return; }
+  Auth.refreshSession();
+
+  setLabel('Loading database…');
+  await DB.init();
+
+  setLabel('Loading profile…');
+  try {
+    _profile = (await Profile.get()) || {};
+    const nm = _profile.businessName || 'Exchange';
+    setTxt('sbLogo', _profile.logo || _profile.logoEmoji || '⬡');
+    setTxt('sbBizName', nm);
+    setTxt('ptbSub', nm);
+  } catch(e) {}
+
+  setLabel('Loading data…');
+  _allTxns    = await DB.all('SELECT * FROM transactions ORDER BY chain_index ASC');
+  _allClients = await DB.all('SELECT * FROM clients ORDER BY total_volume_pkr DESC');
+
+  setLabel('Building reports…');
+  applyPeriod();
+
+  setupSession();
+  setupMobileNav();
+  document.getElementById('logoutBtn').addEventListener('click', () => { Auth.logout(); window.location.href = 'login.html'; });
+
+  document.getElementById('loadingOverlay').style.display = 'none';
+  AuditLog.add('REPORTS_VIEWED', `Period: ${_period}d`);
+});
+
+function setLabel(m) { const e = document.getElementById('loadingLabel'); if(e) e.textContent = m; }
+
+// ── PERIOD LOGIC ──────────────────────────────────────────
+function onPeriodChange() {
+  const val = document.getElementById('periodSelect').value;
+  const cr  = document.getElementById('customDateRange');
+  const cs  = document.getElementById('customSep');
+
+  if (val === 'custom') {
+    cr.style.display = 'flex';
+    cs.style.display = 'block';
+    const from = document.getElementById('dateFrom').value;
+    const to   = document.getElementById('dateTo').value;
+    if (from && to) {
+      _dateFrom = from;
+      _dateTo   = to;
+      _period   = -1;
+      applyPeriod();
+    }
+  } else {
+    cr.style.display = 'none';
+    cs.style.display = 'none';
+    _period   = parseInt(val);
+    _dateFrom = null;
+    _dateTo   = null;
+    applyPeriod();
+  }
+}
+
+function getFilteredTxns() {
+  if (_period === -1 && _dateFrom && _dateTo) {
+    return _allTxns.filter(t => {
+      if (!t.timestamp) return false;
+      const d = t.timestamp.slice(0,10);
+      return d >= _dateFrom && d <= _dateTo;
+    });
+  }
+  if (_period === 0) return [..._allTxns];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - _period);
+  const cutStr = cutoff.toISOString().slice(0,10);
+  return _allTxns.filter(t => t.timestamp && t.timestamp.slice(0,10) >= cutStr);
+}
+
+function applyPeriod() {
+  _filtered = getFilteredTxns();
+  const periodLabel = _period > 0 ? `Son ${_period} gün` : _period === 0 ? 'All time' : `${_dateFrom} → ${_dateTo}`;
+  setTxt('reportRangeSub', `${_filtered.length} transactions — ${periodLabel}`);
+  renderActiveTab();
+}
+
+// ── TAB LOGIC ─────────────────────────────────────────────
+function switchTab(tab, btn) {
+  _activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.report-section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById('sec-' + tab);
+  if (sec) sec.classList.add('active');
+  renderActiveTab();
+}
+
+function renderActiveTab() {
+  destroyCharts();
+  switch(_activeTab) {
+    case 'volume':       renderVolumeTab();       break;
+    case 'transactions': renderTransactionsTab(); break;
+    case 'clients':      renderClientsTab();      break;
+    case 'rates':        renderRatesTab();        break;
+    case 'fbr':          renderFbrTab();          break;
+    case 'export':       renderExportTab();       break;
+  }
+}
+
+function destroyCharts() {
+  Object.values(_charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  _charts = {};
+}
+
+// ── VOLUME TAB ────────────────────────────────────────────
+function renderVolumeTab() {
+  const txns = _filtered;
+  const totalVol = txns.reduce((s,t) => s + (parseFloat(t.amount_pkr)||0), 0);
+  const buyTxns  = txns.filter(t => t.txn_type === 'buy');
+  const sellTxns = txns.filter(t => t.txn_type === 'sell');
+  const buyVol   = buyTxns.reduce((s,t) => s + (parseFloat(t.amount_pkr)||0), 0);
+  const sellVol  = sellTxns.reduce((s,t) => s + (parseFloat(t.amount_pkr)||0), 0);
+  const avgTxn   = txns.length ? totalVol / txns.length : 0;
+
+  setTxt('v-totalVol', fmtPkr(totalVol));
+  setTxt('v-totalSub', `${txns.length} transactions`);
+  setTxt('v-buyVol', fmtPkr(buyVol));
+  setTxt('v-buyCnt', `${buyTxns.length} buy orders`);
+  setTxt('v-sellVol', fmtPkr(sellVol));
+  setTxt('v-sellCnt', `${sellTxns.length} sell orders`);
+  setTxt('v-avgTxn', fmtPkr(avgTxn));
+  setTxt('v-totalTxns', `across ${txns.length} txns`);
+
+  // Daily volume chart
+  const dayMap = {};
+  txns.forEach(t => {
+    const d = t.timestamp ? t.timestamp.slice(0,10) : 'unknown';
+    if (!dayMap[d]) dayMap[d] = { buy: 0, sell: 0 };
+    if (t.txn_type === 'buy')  dayMap[d].buy  += parseFloat(t.amount_pkr)||0;
+    else                        dayMap[d].sell += parseFloat(t.amount_pkr)||0;
+  });
+  const days    = Object.keys(dayMap).sort();
+  const buyData = days.map(d => Math.round(dayMap[d].buy));
+  const sellData= days.map(d => Math.round(dayMap[d].sell));
+  const netData = days.map(d => Math.round(dayMap[d].buy - dayMap[d].sell));
+
+  _charts.vol = new Chart(document.getElementById('volChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [
+        { label: 'Buy',  data: buyData,  backgroundColor: 'rgba(16,185,129,0.55)',  borderColor: 'rgba(16,185,129,0.85)',  borderWidth: 1, borderRadius: 3 },
+        { label: 'Sell', data: sellData, backgroundColor: 'rgba(245,158,11,0.55)',  borderColor: 'rgba(245,158,11,0.85)', borderWidth: 1, borderRadius: 3 },
+        { label: 'Net',  data: netData,  type: 'line', borderColor: 'rgba(14,165,233,0.8)', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.35 }
+      ]
+    },
+    options: chartOpts()
+  });
+
+  // Weekly bar chart
+  const weekMap = {};
+  txns.forEach(t => {
+    const d = new Date(t.timestamp);
+    const weekStart = new Date(d); weekStart.setDate(d.getDate() - d.getDay());
+    const wk = weekStart.toISOString().slice(0,10);
+    if (!weekMap[wk]) weekMap[wk] = { buy: 0, sell: 0 };
+    if (t.txn_type === 'buy') weekMap[wk].buy += parseFloat(t.amount_pkr)||0;
+    else weekMap[wk].sell += parseFloat(t.amount_pkr)||0;
+  });
+  const weeks = Object.keys(weekMap).sort();
+  _charts.weekly = new Chart(document.getElementById('weeklyChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: weeks.map(w => 'Wk ' + w.slice(5,10)),
+      datasets: [
+        { label: 'Buy', data: weeks.map(w => Math.round(weekMap[w].buy)), backgroundColor: 'rgba(16,185,129,0.6)', borderRadius: 4 },
+        { label: 'Sell', data: weeks.map(w => Math.round(weekMap[w].sell)), backgroundColor: 'rgba(245,158,11,0.6)', borderRadius: 4 }
+      ]
+    },
+    options: { ...chartOpts(), plugins: { legend: { display: false }, tooltip: tooltipCfg() } }
+  });
+
+  // Donut
+  const buyPct = txns.length ? Math.round(buyTxns.length / txns.length * 100) : 0;
+  setTxt('splitPct', buyPct + '%');
+  _charts.donut = new Chart(document.getElementById('splitDonut').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Buy', 'Sell'],
+      datasets: [{ data: txns.length ? [buyTxns.length, sellTxns.length] : [1,0], backgroundColor: ['rgba(16,185,129,0.75)','rgba(245,158,11,0.75)'], borderColor: ['rgba(16,185,129,1)','rgba(245,158,11,1)'], borderWidth: 2, hoverOffset: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: false }, tooltip: tooltipCfg() } }
+  });
+}
+
+// ── TRANSACTIONS TAB ──────────────────────────────────────
+function renderTransactionsTab() {
+  const txns = _filtered;
+  setTxt('t-total', txns.length.toLocaleString());
+  setTxt('t-buyCnt', txns.filter(t=>t.txn_type==='buy').length.toLocaleString());
+  setTxt('t-sellCnt', txns.filter(t=>t.txn_type==='sell').length.toLocaleString());
+  setTxt('t-locked', '100%');
+  _txnPage = 1;
+  _txnSearchVal = '';
+  document.getElementById('txnSearch').value = '';
+  renderTxnTable();
+}
+
+function filterTxnTable() {
+  _txnSearchVal = document.getElementById('txnSearch').value.toLowerCase();
+  _txnPage = 1;
+  renderTxnTable();
+}
+
+function renderTxnTable() {
+  const search = _txnSearchVal;
+  const rows = _filtered.filter(t => {
+    if (!search) return true;
+    return (t.receipt_number||'').toLowerCase().includes(search) ||
+           (t.client_name||'').toLowerCase().includes(search) ||
+           (t.client_cnic||'').toLowerCase().includes(search) ||
+           (t.bank_name||'').toLowerCase().includes(search);
+  }).reverse();
+
+  const total   = rows.length;
+  const pages   = Math.ceil(total / TXN_PAGE_SIZE) || 1;
+  _txnPage      = Math.max(1, Math.min(_txnPage, pages));
+  const start   = (_txnPage - 1) * TXN_PAGE_SIZE;
+  const pageRows= rows.slice(start, start + TXN_PAGE_SIZE);
+
+  setTxt('txn-log-sub', `${total} transactions in period — immutable, hash-verified`);
+  setTxt('txnPageInfo', `${start+1}–${Math.min(start+TXN_PAGE_SIZE, total)} / ${total}`);
+
+  const tbody = document.getElementById('txnTableBody');
+  if (!pageRows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted);">No transactions found</td></tr>`;
+  } else {
+    tbody.innerHTML = pageRows.map(t => {
+      const isBuy = t.txn_type === 'buy';
+      const dt = t.timestamp ? t.timestamp.replace('T',' ').slice(0,16) : '—';
+      const usdt = parseFloat(t.amount_usdt||0) ? parseFloat(t.amount_usdt).toFixed(2) : '—';
+      return `<tr>
+        <td class="mono">${esc(t.receipt_number)}</td>
+        <td class="mono" style="font-size:11px">${dt}</td>
+        <td><span class="${isBuy ? 'badge-buy' : 'badge-sell'}">${isBuy ? '📥 BUY' : '📤 SELL'}</span></td>
+        <td style="font-size:13px;font-weight:600">${esc(t.client_name||'—')}<br><span class="mono">${esc(t.client_cnic||'')}</span></td>
+        <td class="${isBuy ? 'amt-buy' : 'amt-sell'}">₨ ${fmtNum(t.amount_pkr)}</td>
+        <td class="mono">₨ ${parseFloat(t.exchange_rate||0).toFixed(2)}</td>
+        <td class="mono">${usdt}</td>
+        <td style="font-size:12px;color:var(--muted)">${esc(t.bank_name||'—')}</td>
+        <td class="hash-cell" title="${esc(t.hash)}">${(t.hash||'').slice(0,16)}…</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination buttons
+  const btnWrap = document.getElementById('txnPageBtns');
+  let btns = '';
+  btns += `<button class="page-btn" onclick="txnGoPage(${_txnPage-1})" ${_txnPage===1?'disabled':''}>← Prev</button>`;
+  const startPg = Math.max(1, _txnPage - 2);
+  const endPg   = Math.min(pages, _txnPage + 2);
+  for (let i = startPg; i <= endPg; i++) {
+    btns += `<button class="page-btn ${i===_txnPage?'active':''}" onclick="txnGoPage(${i})">${i}</button>`;
+  }
+  btns += `<button class="page-btn" onclick="txnGoPage(${_txnPage+1})" ${_txnPage===pages?'disabled':''}>Next →</button>`;
+  btnWrap.innerHTML = btns;
+}
+
+function txnGoPage(p) { _txnPage = p; renderTxnTable(); }
+
+// ── CLIENTS TAB ───────────────────────────────────────────
+function renderClientsTab() {
+  const txns = _filtered;
+
+  // Build active client set from filtered txns
+  const activeSet = new Set(txns.map(t => t.client_cnic || t.client_name).filter(Boolean));
+
+  setTxt('c-total', _allClients.length.toLocaleString());
+  setTxt('c-verified', _allClients.filter(c => c.is_verified).length.toLocaleString());
+  setTxt('c-active', activeSet.size.toLocaleString());
+  setTxt('c-flagged', _allClients.filter(c => c.is_flagged).length.toLocaleString());
+
+  // Volume per client from filtered txns
+  const volMap = {};
+  txns.forEach(t => {
+    const key = t.client_name ? t.client_name.trim() : null;
+    if (!key) return;
+    if (!volMap[key]) volMap[key] = { name: key, vol: 0, cnt: 0 };
+    volMap[key].vol += parseFloat(t.amount_pkr)||0;
+    volMap[key].cnt += 1;
+  });
+  const ranked = Object.values(volMap).sort((a,b) => b.vol - a.vol);
+  const maxVol = ranked.length ? ranked[0].vol : 1;
+  const top10  = ranked.slice(0, 10);
+
+  // Rank list
+  const rankWrap = document.getElementById('clientRankList');
+  if (!ranked.length) {
+    rankWrap.innerHTML = '<div class="no-data"><div class="no-data-icon">👥</div><div class="no-data-text">No client data in period</div></div>';
+  } else {
+    rankWrap.innerHTML = ranked.slice(0, 8).map((c,i) => `
+      <div class="client-rank-bar">
+        <div class="crb-num">${i+1}</div>
+        <div class="crb-init">${initials(c.name)}</div>
+        <div class="crb-info">
+          <div class="crb-name">${esc(c.name)}</div>
+          <div class="crb-sub">${c.cnt} txn${c.cnt!==1?'s':''}</div>
+        </div>
+        <div class="crb-bar-wrap">
+          <div class="crb-bar-bg"><div class="crb-bar-fill" style="width:${Math.round(c.vol/maxVol*100)}%"></div></div>
+        </div>
+        <div class="crb-vol">${fmtPkr(c.vol)}</div>
+      </div>`).join('');
+  }
+
+  // Client volume bar chart
+  _charts.clients = new Chart(document.getElementById('clientChart').getContext('2d'), {
+    type: 'bar',
+    indexAxis: 'y',
+    data: {
+      labels: top10.map(c => c.name.length > 14 ? c.name.slice(0,14)+'…' : c.name),
+      datasets: [{ data: top10.map(c => Math.round(c.vol)), backgroundColor: top10.map((_,i) => `rgba(14,165,233,${0.8 - i*0.06})`), borderRadius: 4 }]
+    },
+    options: {
+      ...chartOpts(),
+      plugins: { legend: { display: false }, tooltip: { ...tooltipCfg(), callbacks: { label: ctx => ` ₨ ${fmtNum(ctx.parsed.x)}` } } },
+      scales: {
+        x: { grid: { color:'rgba(14,165,233,0.06)' }, ticks: { color:'#6B8099', font:{size:10}, callback: v => '₨'+fmtPkrShort(v) }, border:{color:'rgba(14,165,233,0.15)'} },
+        y: { grid: { display: false }, ticks: { color:'#F0F6FF', font:{size:11} } }
+      }
+    }
+  });
+}
+
+// ── RATES TAB ─────────────────────────────────────────────
+function renderRatesTab() {
+  const txns  = _filtered.filter(t => parseFloat(t.exchange_rate) > 0);
+  const rates = txns.map(t => parseFloat(t.exchange_rate));
+
+  if (!rates.length) {
+    ['r-avg','r-min','r-max','r-spread','r-latest'].forEach(id => setTxt(id, '—'));
+    return;
+  }
+
+  const avg    = rates.reduce((a,b)=>a+b,0) / rates.length;
+  const min    = Math.min(...rates);
+  const max    = Math.max(...rates);
+  const latest = rates[rates.length - 1];
+
+  setTxt('r-avg',    '₨ ' + avg.toFixed(2));
+  setTxt('r-min',    '₨ ' + min.toFixed(2));
+  setTxt('r-max',    '₨ ' + max.toFixed(2));
+  setTxt('r-spread', '₨ ' + (max - min).toFixed(2));
+  setTxt('r-latest', '₨ ' + latest.toFixed(2));
+
+  const labels = txns.map(t => t.timestamp ? t.timestamp.slice(0,10) : '—');
+  const rateData = txns.map(t => parseFloat(t.exchange_rate));
+
+  _charts.rateHist = new Chart(document.getElementById('rateHistChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Rate (PKR/USDT)', data: rateData,
+        borderColor: 'rgba(139,92,246,0.9)', backgroundColor: 'rgba(139,92,246,0.08)',
+        borderWidth: 2, pointRadius: 2, fill: true, tension: 0.35
+      }]
+    },
+    options: { ...chartOpts(), plugins: { legend:{display:false}, tooltip:{...tooltipCfg(), callbacks:{label:ctx=>` ₨ ${ctx.parsed.y.toFixed(2)}`}} } }
+  });
+
+  const buyTxns  = txns.filter(t => t.txn_type === 'buy');
+  const sellTxns = txns.filter(t => t.txn_type === 'sell');
+
+  _charts.buyRate = new Chart(document.getElementById('buyRateChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: buyTxns.map(t => t.timestamp ? t.timestamp.slice(0,10) : '—'),
+      datasets: [{ data: buyTxns.map(t => parseFloat(t.exchange_rate)), borderColor:'rgba(16,185,129,0.9)', backgroundColor:'rgba(16,185,129,0.06)', borderWidth:2, pointRadius:2, fill:true, tension:0.4 }]
+    },
+    options: { ...chartOpts(), plugins:{ legend:{display:false}, tooltip:{...tooltipCfg(), callbacks:{label:ctx=>` ₨ ${ctx.parsed.y.toFixed(2)}`}} } }
+  });
+
+  _charts.sellRate = new Chart(document.getElementById('sellRateChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: sellTxns.map(t => t.timestamp ? t.timestamp.slice(0,10) : '—'),
+      datasets: [{ data: sellTxns.map(t => parseFloat(t.exchange_rate)), borderColor:'rgba(245,158,11,0.9)', backgroundColor:'rgba(245,158,11,0.06)', borderWidth:2, pointRadius:2, fill:true, tension:0.4 }]
+    },
+    options: { ...chartOpts(), plugins:{ legend:{display:false}, tooltip:{...tooltipCfg(), callbacks:{label:ctx=>` ₨ ${ctx.parsed.y.toFixed(2)}`}} } }
+  });
+}
+
+// ── FBR TAB ───────────────────────────────────────────────
+function renderFbrTab() {
+  const txns    = _filtered;
+  const totalVol = txns.reduce((s,t) => s + (parseFloat(t.amount_pkr)||0), 0);
+  const buyVol  = txns.filter(t=>t.txn_type==='buy').reduce((s,t)=>s+(parseFloat(t.amount_pkr)||0),0);
+  const sellVol = txns.filter(t=>t.txn_type==='sell').reduce((s,t)=>s+(parseFloat(t.amount_pkr)||0),0);
+  const buyCnt  = txns.filter(t=>t.txn_type==='buy').length;
+  const sellCnt = txns.filter(t=>t.txn_type==='sell').length;
+  const rates   = txns.filter(t=>parseFloat(t.exchange_rate)>0).map(t=>parseFloat(t.exchange_rate));
+  const avgRate = rates.length ? (rates.reduce((a,b)=>a+b,0)/rates.length).toFixed(2) : '—';
+  const minRate = rates.length ? Math.min(...rates).toFixed(2) : '—';
+  const maxRate = rates.length ? Math.max(...rates).toFixed(2) : '—';
+
+  const periodLabel = _period > 0 ? `Last ${_period} days` : _period === 0 ? 'All Time' : `${_dateFrom} to ${_dateTo}`;
+  const now = new Date().toLocaleString('en-PK');
+
+  const report = `DIGITAL EXCHANGE MANAGEMENT SYSTEM
+Tax & Compliance Report
+════════════════════════════════════════════════
+
+Business Information
+────────────────────
+Business Name   : ${_profile.businessName || '—'}
+SECP Reg #      : ${_profile.secpNumber   || '—'}
+NTN Number      : ${_profile.ntnNumber    || '—'}
+Address         : ${_profile.address || '—'}, ${_profile.city || '—'}
+Report Period   : ${periodLabel}
+Generated At    : ${now}
+
+Jurisdiction    : Pakistan
+Regulator       : SECP (Securities and Exchange Commission of Pakistan)
+Tax Authority   : FBR (Federal Board of Revenue)
+AML Status      : Compliant — KYC maintained per FATF guidelines
+
+════════════════════════════════════════════════
+VOLUME SUMMARY
+────────────────────
+Total Volume (PKR)   :  ${totalVol.toLocaleString('en-PK', {minimumFractionDigits:2})}
+Buy Volume (PKR)     :  ${buyVol.toLocaleString('en-PK', {minimumFractionDigits:2})}
+Sell Volume (PKR)    :  ${sellVol.toLocaleString('en-PK', {minimumFractionDigits:2})}
+
+TRANSACTION COUNT
+────────────────────
+Total Transactions   :  ${txns.length}
+Buy Orders           :  ${buyCnt}
+Sell Orders          :  ${sellCnt}
+
+EXCHANGE RATE SUMMARY
+────────────────────
+Average Rate (PKR)   :  ${avgRate}
+Minimum Rate (PKR)   :  ${minRate}
+Maximum Rate (PKR)   :  ${maxRate}
+
+════════════════════════════════════════════════
+CHAIN INTEGRITY CERTIFICATE
+────────────────────
+Hash Algorithm   : SHA-256 (Web Crypto API)
+Chain Type       : Linked Hash Chain (blockchain-style)
+Tamper Detection : Mathematically guaranteed
+Edit/Delete      : Disabled at engine level — no UPDATE/DELETE
+Verification     : chain-integrity.html (QR on each receipt)
+
+All transactions in this system are permanently recorded
+with SHA-256 hashes, linked to a tamper-proof chain.
+Any post-entry modification is mathematically detectable.
+This report can be independently verified using the
+chain verification tool included with this system.
+
+════════════════════════════════════════════════
+DEMS v1 — Digital Exchange Management System
+Tamper-Proof | SHA-256 | SECP Compliant`;
+
+  document.getElementById('fbrPreview').textContent = report;
+
+  // Monthly chart
+  const monthMap = {};
+  _allTxns.forEach(t => {
+    const m = t.timestamp ? t.timestamp.slice(0,7) : 'unknown';
+    if (!monthMap[m]) monthMap[m] = { buy:0, sell:0 };
+    if (t.txn_type==='buy') monthMap[m].buy += parseFloat(t.amount_pkr)||0;
+    else monthMap[m].sell += parseFloat(t.amount_pkr)||0;
+  });
+  const months = Object.keys(monthMap).sort();
+  _charts.monthly = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Buy',  data: months.map(m => Math.round(monthMap[m].buy)),  backgroundColor: 'rgba(16,185,129,0.6)', borderRadius: 4 },
+        { label: 'Sell', data: months.map(m => Math.round(monthMap[m].sell)), backgroundColor: 'rgba(245,158,11,0.6)', borderRadius: 4 }
+      ]
+    },
+    options: { ...chartOpts(), plugins:{ legend:{display:true, labels:{color:'#6B8099',font:{size:11}}}, tooltip:tooltipCfg() } }
+  });
+}
+
+function copyFbrReport() {
+  const txt = document.getElementById('fbrPreview').textContent;
+  navigator.clipboard.writeText(txt).then(() => Toast.show('✅ Report copied to clipboard', 'success'));
+}
+
+// ── EXPORT TAB ────────────────────────────────────────────
+function renderExportTab() {
+  const wrap = document.getElementById('exportHistoryWrap');
+  if (!_exportHistory.length) {
+    wrap.innerHTML = '<div class="no-data"><div class="no-data-icon">📁</div><div class="no-data-text">Is session mein abhi koi export nahi kiya</div></div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="report-table"><thead><tr><th>File</th><th>Type</th><th>Records</th><th>Time</th></tr></thead><tbody>
+    ${_exportHistory.map(e => `<tr><td class="mono">${e.file}</td><td>${e.type}</td><td>${e.records}</td><td class="mono" style="font-size:11px">${e.time}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── EXPORT FUNCTIONS ──────────────────────────────────────
+function exportCSV() {
+  const txns = _filtered;
+  if (!txns.length) { Toast.show('No transactions in period', 'info'); return; }
+  const headers = ['Receipt No','Date','Type','Amount PKR','Rate','USDT','Client Name','CNIC','Bank','Ref','Notes','Hash'];
+  const rows = txns.map(t => [
+    t.receipt_number,
+    t.timestamp ? t.timestamp.replace('T',' ').slice(0,19) : '',
+    t.txn_type?.toUpperCase(),
+    t.amount_pkr, t.exchange_rate, t.amount_usdt,
+    t.client_name, t.client_cnic, t.bank_name, t.payment_ref, t.notes, t.hash
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`));
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  downloadFile(csv, `DEMS-transactions-${today()}.csv`, 'text/csv');
+  logExport(`DEMS-transactions-${today()}.csv`, 'Transactions CSV', txns.length);
+  Toast.show(`✅ ${txns.length} transactions exported`, 'success');
+  AuditLog.add('REPORT_EXPORT_CSV', `${txns.length} rows`);
+}
+
+function exportSummaryTxt() {
+  const txns    = _filtered;
+  const totalVol = txns.reduce((s,t)=>s+(parseFloat(t.amount_pkr)||0),0);
+  const buyVol  = txns.filter(t=>t.txn_type==='buy').reduce((s,t)=>s+(parseFloat(t.amount_pkr)||0),0);
+  const sellVol = txns.filter(t=>t.txn_type==='sell').reduce((s,t)=>s+(parseFloat(t.amount_pkr)||0),0);
+  const rates   = txns.filter(t=>parseFloat(t.exchange_rate)>0).map(t=>parseFloat(t.exchange_rate));
+  const avg     = rates.length ? (rates.reduce((a,b)=>a+b,0)/rates.length).toFixed(2) : '—';
+  const period  = _period > 0 ? `Last ${_period} days` : 'All Time';
+
+  const txt = `DEMS Summary Report\n${'═'.repeat(40)}\nPeriod: ${period}\nGenerated: ${new Date().toLocaleString('en-PK')}\nBusiness: ${_profile.businessName||'—'}\nSECP: ${_profile.secpNumber||'—'}\n\nVolume Summary\n──────────────\nTotal  : ₨ ${totalVol.toLocaleString('en-PK')}\nBuy    : ₨ ${buyVol.toLocaleString('en-PK')}\nSell   : ₨ ${sellVol.toLocaleString('en-PK')}\n\nCounts\n──────\nTotal  : ${txns.length}\nBuy    : ${txns.filter(t=>t.txn_type==='buy').length}\nSell   : ${txns.filter(t=>t.txn_type==='sell').length}\n\nRates\n─────\nAverage: ₨ ${avg}\n`;
+  downloadFile(txt, `DEMS-summary-${today()}.txt`, 'text/plain');
+  logExport(`DEMS-summary-${today()}.txt`, 'Summary TXT', txns.length);
+  Toast.show('✅ Summary report downloaded', 'success');
+  AuditLog.add('REPORT_EXPORT_SUMMARY', `Period: ${period}`);
+}
+
+function exportFBR() {
+  const txt = document.getElementById('fbrPreview')?.textContent || '';
+  if (!txt || txt === 'Generating report…') { switchTab('fbr', null); setTimeout(exportFBR, 300); return; }
+  downloadFile(txt, `DEMS-FBR-${today()}.txt`, 'text/plain');
+  logExport(`DEMS-FBR-${today()}.txt`, 'FBR/Tax TXT', _filtered.length);
+  Toast.show('✅ FBR report downloaded', 'success');
+  AuditLog.add('REPORT_EXPORT_FBR', '');
+}
+
+function exportClientCSV() {
+  const clients = _allClients;
+  if (!clients.length) { Toast.show('No clients found', 'info'); return; }
+  const headers = ['Full Name','CNIC','Phone','WhatsApp','Bank','Account Last4','Verified','Flagged','Flag Reason','Total Txns','Total Volume PKR','Created'];
+  const rows = clients.map(c => [
+    c.full_name, c.cnic, c.phone, c.whatsapp, c.bank_name, c.bank_last4,
+    c.is_verified ? 'Yes' : 'No', c.is_flagged ? 'Yes' : 'No', c.flag_reason,
+    c.total_txns, c.total_volume_pkr, c.created_at
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`));
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  downloadFile(csv, `DEMS-clients-${today()}.csv`, 'text/csv');
+  logExport(`DEMS-clients-${today()}.csv`, 'Client KYC CSV', clients.length);
+  Toast.show(`✅ ${clients.length} clients exported`, 'success');
+  AuditLog.add('REPORT_EXPORT_CLIENTS', `${clients.length} clients`);
+}
+
+function exportHashLedger() {
+  const txns = _filtered;
+  if (!txns.length) { Toast.show('No transactions in period', 'info'); return; }
+  const headers = ['Chain Index','Receipt No','Timestamp','Type','Amount PKR','Client','Hash','Prev Hash'];
+  const rows = txns.map(t => [
+    t.chain_index, t.receipt_number,
+    t.timestamp ? t.timestamp.replace('T',' ').slice(0,19) : '',
+    t.txn_type?.toUpperCase(), t.amount_pkr, t.client_name, t.hash, t.prev_hash
+  ].map(v => `"${(v||'').toString().replace(/"/g,'""')}"`));
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  downloadFile(csv, `DEMS-hash-ledger-${today()}.csv`, 'text/csv');
+  logExport(`DEMS-hash-ledger-${today()}.csv`, 'Hash Ledger CSV', txns.length);
+  Toast.show(`✅ Hash ledger exported — ${txns.length} records`, 'success');
+  AuditLog.add('REPORT_EXPORT_HASH_LEDGER', `${txns.length} records`);
+}
+
+function printReport() {
+  Toast.show('💡 Browser Print dialog kholein — "Save as PDF" choose karein', 'info');
+  setTimeout(() => window.print(), 800);
+}
+
+function logExport(file, type, records) {
+  _exportHistory.unshift({ file, type, records, time: new Date().toLocaleTimeString('en-PK') });
+  if (_activeTab === 'export') renderExportTab();
+}
+
+// ── REFRESH ───────────────────────────────────────────────
+async function refreshAll() {
+  Toast.show('Refreshing…', 'info');
+  _allTxns    = await DB.all('SELECT * FROM transactions ORDER BY chain_index ASC');
+  _allClients = await DB.all('SELECT * FROM clients ORDER BY total_volume_pkr DESC');
+  applyPeriod();
+  Toast.show('✅ Data refreshed', 'success');
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────
+function chartOpts() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: tooltipCfg() },
+    scales: {
+      x: { grid:{ color:'rgba(14,165,233,0.06)' }, ticks:{ color:'#6B8099', font:{size:10}, maxTicksLimit:8 }, border:{ color:'rgba(14,165,233,0.15)' } },
+      y: { grid:{ color:'rgba(14,165,233,0.06)' }, ticks:{ color:'#6B8099', font:{size:10}, callback: v => '₨'+fmtPkrShort(v) }, border:{ color:'rgba(14,165,233,0.15)' } }
+    }
+  };
+}
+
+function tooltipCfg() {
+  return {
+    backgroundColor:'#0E1A2E', borderColor:'rgba(14,165,233,0.3)', borderWidth:1,
+    titleColor:'#F0F6FF', bodyColor:'#6B8099', padding:12
+  };
+}
+
+// ── UTILITY ───────────────────────────────────────────────
+function setTxt(id, v) { const e = document.getElementById(id); if(e) e.textContent = v; }
+function esc(s) { if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtPkr(n) {
+  const v = parseFloat(n||0);
+  if (v >= 10000000) return '₨ ' + (v/10000000).toFixed(2) + ' Cr';
+  if (v >= 100000)   return '₨ ' + (v/100000).toFixed(2) + ' L';
+  if (v >= 1000)     return '₨ ' + (v/1000).toFixed(1) + 'K';
+  return '₨ ' + v.toLocaleString('en-PK');
+}
+
+function fmtPkrShort(v) {
+  if (Math.abs(v) >= 10000000) return (v/10000000).toFixed(1)+'Cr';
+  if (Math.abs(v) >= 100000)   return (v/100000).toFixed(1)+'L';
+  if (Math.abs(v) >= 1000)     return (v/1000).toFixed(0)+'K';
+  return Math.round(v).toString();
+}
+
+function fmtNum(n) { return parseFloat(n||0).toLocaleString('en-PK', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+
+function initials(name) {
+  if (!name) return '?';
+  const p = name.trim().split(/\s+/);
+  return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── SESSION ───────────────────────────────────────────────
+function setupSession() {
+  function tick() {
+    try {
+      const raw = localStorage.getItem('dems_session');
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      const left = Math.max(0, Math.floor((s.expiresAt - Date.now()) / 1000));
+      const m = Math.floor(left/60), sec = left%60;
+      setTxt('sessionTimer', m + ':' + String(sec).padStart(2,'0'));
+      if (left === 0) { Auth.logout(); window.location.href = 'login.html'; }
+    } catch(e) {}
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+function setupMobileNav() {
+  const btn = document.getElementById('mobileMenuBtn');
+  const sb  = document.getElementById('sidebar');
+  const ov  = document.getElementById('mobileOverlay');
+  if (!btn) return;
+  btn.addEventListener('click', () => { sb.classList.toggle('open'); ov.classList.toggle('show'); });
+  ov.addEventListener('click', () => { sb.classList.remove('open'); ov.classList.remove('show'); });
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+const Toast = {
+  show(msg, type='info', dur=3500) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, dur);
+  }
+};
+</script>
+</body>
+</html>

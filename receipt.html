@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt — DEMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+<style>
+/* ── PAGE LAYOUT ─────────────────────────────────────── */
+.page-wrap {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--navy-2);
+  border-right: 1px solid var(--border);
+  padding: 24px 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.brand-icon { font-size: 22px; color: var(--blue); }
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+.brand-name small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; margin-top: 2px; }
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 8px;
+  margin: 16px 0 6px;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-link:hover { background: var(--blue-glow); color: var(--white); text-decoration: none; }
+.nav-link.active { background: var(--blue-glow); color: var(--blue); }
+.nav-link .n-icon { font-size: 15px; width: 18px; text-align: center; }
+.sidebar-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+.session-info { font-size: 11px; color: var(--muted); padding: 6px 10px; }
+.session-badge { display: inline-block; font-family: var(--font-mono); font-size: 11px; color: var(--gold); }
+
+.main { flex: 1; padding: 32px; overflow-x: hidden; }
+
+/* ── TOP BAR ─────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+}
+.page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.action-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── SEARCH BOX ──────────────────────────────────────── */
+.search-card {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.search-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.search-group { flex: 1; min-width: 200px; }
+.search-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 6px; display: block; }
+
+/* ── LOADING / ERROR STATES ──────────────────────────── */
+.state-box {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 60px 40px;
+  text-align: center;
+}
+.state-icon { font-size: 48px; margin-bottom: 16px; }
+.state-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.state-sub { font-size: 14px; color: var(--muted); }
+
+/* ── RECEIPT CARD ────────────────────────────────────── */
+.receipt-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Screen receipt */
+.receipt-card {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.receipt-header {
+  background: linear-gradient(135deg, #0D1F3C 0%, #0E1A2E 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.biz-block {}
+.biz-logo { font-size: 28px; color: var(--blue); margin-bottom: 6px; }
+.biz-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+.biz-secp { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.biz-address { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.receipt-meta { text-align: right; }
+.receipt-num {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.receipt-date { font-size: 12px; color: var(--muted); }
+.receipt-chain { font-size: 11px; color: var(--blue); font-family: var(--font-mono); margin-top: 4px; }
+
+/* Status banner */
+.status-banner {
+  padding: 10px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-banner.buy  { background: rgba(16,185,129,0.10); color: var(--green); border-bottom: 1px solid rgba(16,185,129,0.15); }
+.status-banner.sell { background: rgba(245,158,11,0.10); color: var(--gold); border-bottom: 1px solid rgba(245,158,11,0.2); }
+
+/* Amount highlight */
+.amount-section {
+  padding: 28px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.amount-pkr {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+.amount-pkr span { font-size: 18px; color: var(--muted); font-weight: 400; margin-right: 4px; }
+.amount-usdt {
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+.rate-pill {
+  background: var(--navy-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.rate-pill strong { color: var(--blue); }
+
+/* Details grid */
+.details-section { padding: 28px 32px; border-bottom: 1px solid var(--border); }
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 32px;
+}
+.detail-row {}
+.detail-key { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.detail-val { font-size: 14px; color: var(--white); font-weight: 500; }
+.detail-val.mono { font-family: var(--font-mono); font-size: 12px; }
+.detail-val.green { color: var(--green); }
+.detail-val.empty { color: var(--muted); font-style: italic; font-weight: 400; }
+
+/* Hash section */
+.hash-section {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(14,165,233,0.03);
+}
+.hash-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+.hash-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--green);
+  word-break: break-all;
+  line-height: 1.6;
+}
+.hash-chain-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.hash-chain-item { font-size: 11px; color: var(--muted); }
+.hash-chain-item span { color: var(--blue); font-family: var(--font-mono); }
+
+/* QR section */
+.qr-section {
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.qr-box {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  flex-shrink: 0;
+}
+.qr-box canvas { display: block; }
+.qr-info {}
+.qr-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+.qr-sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.verify-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--blue);
+  font-family: var(--font-mono);
+  text-decoration: none;
+}
+.verify-link:hover { text-decoration: underline; }
+
+/* Notes section */
+.notes-section {
+  padding: 16px 32px 24px;
+  border-top: 1px solid var(--border);
+}
+.notes-content { font-size: 13px; color: var(--muted); font-style: italic; }
+
+/* Footer */
+.receipt-footer {
+  background: var(--navy-3);
+  border-top: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.footer-text { font-size: 11px; color: var(--muted); }
+.footer-text strong { color: var(--blue); }
+.footer-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--green);
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: var(--radius-pill);
+  padding: 4px 12px;
+}
+
+/* ── ACTION BUTTONS ──────────────────────────────────── */
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* ── SCREENSHOT PREVIEW ──────────────────────────────── */
+.screenshot-section {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.screenshot-title { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 12px; }
+.screenshot-img { max-width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+/* ── INTEGRITY BADGE ─────────────────────────────────── */
+.integrity-banner {
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.integrity-banner.ok { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: var(--green); }
+.integrity-banner.warn { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #FCA5A5; }
+.integrity-banner.checking { background: rgba(14,165,233,0.06); border: 1px solid var(--border); color: var(--muted); }
+.integrity-icon { font-size: 22px; flex-shrink: 0; }
+.integrity-text { flex: 1; }
+.integrity-title { font-weight: 600; margin-bottom: 2px; }
+.integrity-sub { font-size: 11px; opacity: 0.8; }
+
+/* ── PRINT STYLES ────────────────────────────────────── */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sidebar, .action-row, .search-card, .screenshot-section, .integrity-banner, .main > .topbar .action-bar { display: none !important; }
+  .page-wrap { display: block; }
+  .main { padding: 0; }
+  .topbar { display: none; }
+  .receipt-wrap { max-width: 100%; }
+  .receipt-card {
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #000;
+  }
+  .receipt-header { background: #f5f8ff; border-bottom: 1px solid #ddd; }
+  .biz-name, .receipt-num, .page-title, .amount-pkr, .detail-val { color: #000 !important; }
+  .biz-secp, .biz-address, .receipt-date, .receipt-chain, .detail-key, .qr-sub, .footer-text, .amount-usdt { color: #555 !important; }
+  .status-banner.buy  { background: #e8fff6; color: #0a6b44; }
+  .status-banner.sell { background: #fffbeb; color: #8a5f00; }
+  .hash-section { background: #f8fafc; }
+  .hash-value { color: #0a6b44; }
+  .receipt-footer { background: #f5f8ff; }
+  .footer-locked { background: #e8fff6; border-color: #9edfc4; color: #0a6b44; }
+  .rate-pill { background: #f0f4f8; border-color: #ddd; color: #333; }
+  .rate-pill strong { color: #0077aa; }
+  body { background: #fff; }
+}
+
+/* ── THERMAL (NARROW) PRINT ──────────────────────────── */
+.thermal-preview {
+  display: none;
+  background: #fff;
+  color: #000;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  width: 80mm;
+  padding: 8mm 6mm;
+  margin: 0 auto;
+}
+@media print {
+  body.thermal-mode .receipt-card { display: none; }
+  body.thermal-mode .thermal-preview { display: block; }
+}
+.thermal-center { text-align: center; }
+.thermal-line { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+.thermal-row { display: flex; justify-content: space-between; margin: 3px 0; }
+.thermal-big { font-size: 16px; font-weight: bold; text-align: center; margin: 8px 0; }
+
+/* ── SHARE MODAL ─────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--navy-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 360px;
+  max-width: 90vw;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+}
+.modal-close:hover { color: var(--white); }
+.share-opt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  background: var(--navy-3);
+  text-decoration: none;
+}
+.share-opt:hover { background: rgba(14,165,233,0.08); border-color: var(--blue); }
+.share-opt-icon { font-size: 24px; flex-shrink: 0; }
+.share-opt-name { font-size: 14px; font-weight: 600; color: var(--white); }
+.share-opt-sub { font-size: 12px; color: var(--muted); }
+
+/* ── MOBILE ──────────────────────────────────────────── */
+.mobile-topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(8,15,28,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mobile-brand {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+}
+.mobile-brand span { color: var(--blue); }
+.mobile-nav-btn {
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.mobile-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 150;
+}
+.mobile-sidebar-overlay.show { display: block; }
+
+@media (max-width: 768px) {
+  .mobile-topbar { display: flex; }
+  .sidebar { position: fixed; left: -240px; top: 0; height: 100vh; z-index: 200; transition: left 0.25s; }
+  .sidebar.mobile-open { left: 0; }
+  .page-wrap { display: block; }
+  .main { padding: 16px; }
+  .receipt-header { padding: 20px; }
+  .amount-section { padding: 20px; }
+  .details-section { padding: 20px; }
+  .details-grid { grid-template-columns: 1fr; }
+  .hash-section { padding: 16px 20px; }
+  .qr-section { padding: 20px; flex-direction: column; align-items: flex-start; }
+  .receipt-footer { padding: 14px 20px; }
+  .amount-pkr { font-size: 28px; }
+  .action-row { flex-direction: column; }
+  .action-row .btn-primary, .action-row .btn-secondary { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile topbar -->
+<div class="mobile-topbar">
+  <div class="mobile-brand">Exchange<span>MS</span></div>
+  <button class="mobile-nav-btn" id="mobileMenuBtn" aria-label="Open menu">☰</button>
+</div>
+<div class="mobile-sidebar-overlay" id="mobileOverlay"></div>
+
+<!-- Thermal print template (hidden except in thermal print mode) -->
+<div class="thermal-preview" id="thermalPrint"></div>
+
+<!-- Share modal -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      📤 Share Receipt
+      <button class="modal-close" id="closeShareModal">✕</button>
+    </div>
+    <a class="share-opt" id="whatsappShare" href="#" target="_blank">
+      <div class="share-opt-icon">💬</div>
+      <div>
+        <div class="share-opt-name">WhatsApp</div>
+        <div class="share-opt-sub">Send receipt details to client</div>
+      </div>
+    </a>
+    <div class="share-opt" id="smsShare">
+      <div class="share-opt-icon">📱</div>
+      <div>
+        <div class="share-opt-name">SMS / Text Message</div>
+        <div class="share-opt-sub">Copy short text for SMS</div>
+      </div>
+    </div>
+    <div class="share-opt" id="copyShare">
+      <div class="share-opt-icon">📋</div>
+      <div>
+        <div class="share-opt-name">Copy Text</div>
+        <div class="share-opt-sub">Copy receipt details to clipboard</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────── -->
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-icon" id="sidebarLogo">⬡</span>
+      <div class="brand-name">
+        <span id="sidebarBizName">Exchange</span>
+        <small>DEMS v1.0</small>
+      </div>
+    </div>
+
+    <span class="nav-section-label">Main</span>
+    <a href="dashboard.html" class="nav-link"><span class="n-icon">📊</span> Dashboard</a>
+    <a href="new-transaction.html" class="nav-link"><span class="n-icon">➕</span> New Transaction</a>
+    <a href="transactions.html" class="nav-link"><span class="n-icon">📋</span> All Transactions</a>
+    <a href="clients.html" class="nav-link"><span class="n-icon">👤</span> Client KYC</a>
+
+    <span class="nav-section-label">System</span>
+    <a href="chain-integrity.html" class="nav-link"><span class="n-icon">🔗</span> Chain Integrity</a>
+    <a href="reports.html" class="nav-link"><span class="n-icon">📑</span> Reports</a>
+    <a href="settings.html" class="nav-link"><span class="n-icon">⚙️</span> Settings</a>
+
+    <div class="sidebar-footer">
+      <div class="session-info">
+        Session: <span class="session-badge" id="sessionBadge">--:--</span>
+      </div>
+      <button class="nav-link w-full" style="border:none;cursor:pointer;background:none;width:100%;text-align:left;color:var(--muted);" id="logoutBtn">
+        <span class="n-icon">🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ───────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div>
+        <div class="page-title">🧾 Transaction Receipt</div>
+        <div class="page-sub" id="pageSubtitle">Loading receipt…</div>
+      </div>
+      <div class="action-bar" id="topActionBar">
+        <a href="transactions.html" class="btn-secondary btn-sm">← Back</a>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="state-box" id="stateLoading">
+      <div class="state-icon">⏳</div>
+      <div class="state-title">Loading Receipt…</div>
+      <div class="state-sub">Fetching transaction from database</div>
+    </div>
+
+    <!-- Error state -->
+    <div class="state-box" id="stateError" style="display:none;">
+      <div class="state-icon">❌</div>
+      <div class="state-title" id="errorTitle">Receipt Not Found</div>
+      <div class="state-sub" id="errorSub">No transaction found with this receipt number.</div>
+      <div style="margin-top:20px;">
+        <a href="transactions.html" class="btn-secondary">← View All Transactions</a>
+      </div>
+    </div>
+
+    <!-- Search box (shown when no receipt is preloaded) -->
+    <div class="search-card" id="searchCard" style="display:none;">
+      <div class="search-row">
+        <div class="search-group">
+          <label class="search-label" for="receiptSearch">Enter Receipt Number</label>
+          <input type="text" class="form-input" id="receiptSearch" placeholder="EXC-2025-00001" style="font-family:var(--font-mono);">
+        </div>
+        <button class="btn-primary" id="searchBtn">🔍 Look Up</button>
+      </div>
+    </div>
+
+    <!-- Receipt content (hidden until loaded) -->
+    <div id="receiptContent" style="display:none;">
+
+      <!-- Integrity verification banner -->
+      <div class="integrity-banner checking" id="integrityBanner">
+        <div class="integrity-icon">🔄</div>
+        <div class="integrity-text">
+          <div class="integrity-title">Verifying hash integrity…</div>
+          <div class="integrity-sub">Checking SHA-256 hash and chain link</div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row">
+        <button class="btn-primary" id="btnPrint" onclick="printReceipt()">🖨️ Print Receipt</button>
+        <button class="btn-secondary" id="btnThermal" onclick="printThermal()">📄 Thermal Print</button>
+        <button class="btn-secondary" id="btnDownloadPdf" id="btn-pdf" onclick="downloadPDF()">⬇️ Download PDF</button>
+        <button class="btn-secondary" id="btnShare" id="btn-whatsapp" onclick="shareWhatsApp()">📤 WhatsApp Share</button>
+      </div>
+
+      <!-- Screenshot preview (if attached) -->
+      <div class="screenshot-section" id="screenshotSection" style="display:none;">
+        <div class="screenshot-title">📎 Payment Screenshot</div>
+        <img class="screenshot-img" id="screenshotImg" src="" alt="Payment screenshot">
+      </div>
+
+      <div class="receipt-wrap">
+        <!-- ── RECEIPT CARD ────────────────────────── -->
+        <div class="receipt-card" id="theReceipt">
+
+          <!-- Header: Business info -->
+          <div class="receipt-header">
+            <div class="biz-block">
+              <div class="biz-logo" id="bizLogo">⬡</div>
+              <div class="biz-name" id="bizName">Exchange Business</div>
+              <div class="biz-secp" id="bizSecp">SECP: —</div>
+              <div class="biz-address" id="bizAddress"></div>
+            </div>
+            <div class="receipt-meta">
+              <div class="receipt-num" id="rcptNumber">—</div>
+              <div class="receipt-date" id="rcptDate">—</div>
+              <div class="receipt-chain" id="rcptChain">Chain #—</div>
+            </div>
+          </div>
+
+          <!-- Transaction type banner -->
+          <div class="status-banner" id="statusBanner">
+            <span id="statusIcon">📥</span>
+            <span id="statusText">BUY — PKR to USDT</span>
+          </div>
+
+          <!-- Amount highlight -->
+          <div class="amount-section">
+            <div>
+              <div class="amount-pkr"><span>₨</span><span id="amtPkr">—</span></div>
+              <div class="amount-usdt" id="amtUsdt">— USDT</div>
+            </div>
+            <div class="rate-pill">Rate: <strong id="rcptRate">—</strong> PKR/USDT</div>
+          </div>
+
+          <!-- Details grid -->
+          <div class="details-section">
+            <div class="details-grid">
+              <div class="detail-row">
+                <div class="detail-key">Order ID</div>
+                <div class="detail-val mono" id="dOrderId">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Payment Reference</div>
+                <div class="detail-val mono" id="dPayRef">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Client Name</div>
+                <div class="detail-val" id="dClientName">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Client CNIC</div>
+                <div class="detail-val mono" id="dClientCnic">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Bank</div>
+                <div class="detail-val" id="dBank">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Account (last 4)</div>
+                <div class="detail-val mono" id="dBankLast4">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Date & Time</div>
+                <div class="detail-val" id="dDateTime">—</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-key">Status</div>
+                <div class="detail-val green" id="dStatus">🔒 Permanently Locked</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hash chain -->
+          <div class="hash-section">
+            <div class="hash-label">🔐 SHA-256 Hash — Tamper-Proof Record</div>
+            <div class="hash-value" id="dHash">—</div>
+            <div class="hash-chain-row">
+              <div class="hash-chain-item">Chain Index: <span id="dChainIndex">—</span></div>
+              <div class="hash-chain-item">Prev Hash: <span id="dPrevHash">—</span></div>
+            </div>
+          </div>
+
+          <!-- QR code -->
+          <div class="qr-section">
+            <div class="qr-box">
+              <canvas id="qrCanvas" width="120" height="120"></canvas>
+            </div>
+            <div class="qr-info">
+              <div class="qr-title">QR Verification Code</div>
+              <div class="qr-sub">
+                Scan this code to instantly verify<br>
+                the authenticity of this receipt.<br>
+                Any tampering will be detected.
+              </div>
+              <a href="#" class="verify-link" id="verifyLink">
+                🔗 verify.html?receipt=<span id="verifyReceiptSpan">—</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Notes (if any) -->
+          <div class="notes-section" id="notesSection" style="display:none;">
+            <div class="detail-key">Notes</div>
+            <div class="notes-content" id="dNotes">—</div>
+          </div>
+
+          <!-- Footer -->
+          <div class="receipt-footer">
+            <div class="footer-text">
+              Digital Exchange Management System &nbsp;|&nbsp; <strong>DEMS v1.0</strong>
+            </div>
+            <div class="footer-locked">🔒 Immutable Record — SHA-256 Secured</div>
+          </div>
+
+        </div><!-- /receipt-card -->
+      </div><!-- /receipt-wrap -->
+
+    </div><!-- /receiptContent -->
+
+  </main>
+</div><!-- /page-wrap -->
+
+<!-- QRCode.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- jsPDF library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Core scripts -->
+<script src="db.js"></script>
+<script src="auth.js"></script>
+<script src="profile.js"></script>
+<script src="audit-log.js"></script>
+<script src="hash-engine.js"></script>
+
+<script>
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────
+let _txn     = null;
+let _profile = null;
+let _receiptNumber = null;
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  // Auth check — consistent with auth.js API
+  if (!Auth.checkSession()) {
+    window.location.href = 'login.html';
+    return;
+  }
+  Auth.refreshSession();
+
+  await DB.init();
+
+  // Load business profile for sidebar + receipt header
+  try {
+    _profile = await Profile.get();
+    if (_profile) applyProfile(_profile);
+  } catch (e) {
+    console.warn('Profile load error:', e);
+  }
+
+  // Session timer
+  setupSessionTimer();
+  setupMobileNav();
+  setupLogout();
+
+  // ── Determine receipt number ───────────────────────────
+  // Priority: ?receipt= param → ?r= param → sessionStorage → most recent
+  const params = new URLSearchParams(window.location.search);
+  const receiptNum = params.get('receipt')
+                  || params.get('r')
+                  || sessionStorage.getItem('viewReceiptNumber');
+
+  if (receiptNum) {
+    sessionStorage.removeItem('viewReceiptNumber');
+    _receiptNumber = receiptNum;
+    await loadReceipt(_receiptNumber);
+  } else {
+    // No param — load the most recent transaction as default
+    try {
+      const latest = await DB.get(
+        `SELECT receipt_number FROM transactions ORDER BY chain_index DESC LIMIT 1`
+      );
+      if (latest && latest.receipt_number) {
+        _receiptNumber = latest.receipt_number;
+        await loadReceipt(_receiptNumber);
+      } else {
+        // No transactions at all — show search box
+        document.getElementById('stateLoading').style.display = 'none';
+        document.getElementById('searchCard').style.display = 'block';
+        document.getElementById('pageSubtitle').textContent = 'Enter a receipt number to look up';
+        document.getElementById('topActionBar').innerHTML =
+          '<a href="transactions.html" class="btn-secondary btn-sm">← Back</a>';
+      }
+    } catch (e) {
+      document.getElementById('stateLoading').style.display = 'none';
+      document.getElementById('searchCard').style.display = 'block';
+      document.getElementById('pageSubtitle').textContent = 'Enter a receipt number to look up';
+      document.getElementById('topActionBar').innerHTML =
+        '<a href="transactions.html" class="btn-secondary btn-sm">← Back</a>';
+    }
+  }
+
+  // Search button handler
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    const val = document.getElementById('receiptSearch').value.trim().toUpperCase();
+    if (!val) return Toast.show('Enter a receipt number', 'error');
+    loadReceipt(val);
+  });
+  document.getElementById('receiptSearch').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('searchBtn').click();
+  });
+});
+
+// ── APPLY PROFILE ─────────────────────────────────────────
+function applyProfile(p) {
+  const setText = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+  const logo = p.logo || '⬡';
+  setText('sidebarLogo', logo);
+  setText('sidebarBizName', p.business_name || 'Exchange');
+  setText('bizLogo', logo);
+  setText('bizName', p.business_name || 'Exchange Business');
+  setText('bizSecp', p.secp_number ? 'SECP: ' + p.secp_number : '');
+  const addrParts = [p.address, p.city, p.phone].filter(Boolean);
+  setText('bizAddress', addrParts.join(' · '));
+}
+
+// ── LOAD RECEIPT ──────────────────────────────────────────
+async function loadReceipt(receiptNumber) {
+  document.getElementById('stateLoading').style.display = 'block';
+  document.getElementById('stateError').style.display = 'none';
+  document.getElementById('receiptContent').style.display = 'none';
+  document.getElementById('searchCard').style.display = 'none';
+
+  try {
+    const txn = await DB.get(
+      `SELECT * FROM transactions WHERE receipt_number = ?`,
+      [receiptNumber]
+    );
+
+    if (!txn) {
+      showError('Receipt Not Found', `No transaction found with receipt number "${receiptNumber}".`);
+      return;
+    }
+
+    _txn = txn;
+    _receiptNumber = receiptNumber;
+
+    // Render the receipt
+    renderReceipt(txn);
+
+    // Show content
+    document.getElementById('stateLoading').style.display = 'none';
+    document.getElementById('receiptContent').style.display = 'block';
+    document.getElementById('pageSubtitle').textContent = 'Receipt ' + receiptNumber;
+    document.getElementById('topActionBar').innerHTML = `
+      <a href="transactions.html" class="btn-secondary btn-sm">← Back</a>
+      <a href="new-transaction.html" class="btn-secondary btn-sm">➕ New</a>
+    `;
+
+    // Verify hash integrity asynchronously
+    verifyIntegrity(txn);
+
+    // Generate QR code
+    generateQR(txn);
+
+    // Log receipt view
+    AuditLog.add('RECEIPT_VIEWED', `Receipt: ${receiptNumber}`);
+
+    // Update print count in DB
+    DB.run(
+      `UPDATE receipts SET print_count = print_count + 0 WHERE receipt_number = ?`,
+      [receiptNumber]
+    ).catch(() => {});
+
+  } catch (err) {
+    console.error('Load receipt error:', err);
+    showError('Error Loading Receipt', err.message);
+  }
+}
+
+// ── RENDER RECEIPT ────────────────────────────────────────
+function renderReceipt(txn) {
+  const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+  const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const dash = v => (v && v !== '') ? v : '<span class="empty">—</span>';
+
+  // Type banner
+  const isBuy = txn.txn_type === 'buy';
+  const banner = document.getElementById('statusBanner');
+  banner.className = 'status-banner ' + txn.txn_type;
+  document.getElementById('statusIcon').textContent = isBuy ? '📥' : '📤';
+  document.getElementById('statusText').textContent = isBuy
+    ? 'BUY — Client paid PKR, received USDT'
+    : 'SELL — Client sold USDT, received PKR';
+
+  // Amounts
+  document.getElementById('amtPkr').textContent = fmt(txn.amount_pkr);
+  document.getElementById('amtUsdt').textContent = fmtU(txn.amount_usdt) + ' USDT';
+  document.getElementById('rcptRate').textContent = fmt(txn.exchange_rate);
+
+  // Receipt meta
+  document.getElementById('rcptNumber').textContent = txn.receipt_number;
+  document.getElementById('rcptChain').textContent = 'Chain #' + txn.chain_index;
+
+  // Format date nicely
+  const dt = new Date(txn.timestamp);
+  const dateStr = dt.toLocaleDateString('en-PK', { year:'numeric', month:'long', day:'numeric' });
+  const timeStr = dt.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: true });
+  document.getElementById('rcptDate').textContent = dateStr + ' · ' + timeStr;
+  document.getElementById('dDateTime').textContent = dateStr + ', ' + timeStr;
+
+  // Details
+  document.getElementById('dOrderId').innerHTML    = dash(txn.order_id);
+  document.getElementById('dPayRef').innerHTML     = dash(txn.payment_ref);
+  document.getElementById('dClientName').innerHTML = dash(txn.client_name);
+  document.getElementById('dClientCnic').innerHTML = dash(txn.client_cnic);
+  document.getElementById('dBank').innerHTML       = dash(txn.bank_name);
+  document.getElementById('dBankLast4').innerHTML  = txn.bank_last4 ? '****' + txn.bank_last4 : '<span class="empty">—</span>';
+
+  // Hash
+  document.getElementById('dHash').textContent = txn.hash || '—';
+  document.getElementById('dChainIndex').textContent = '#' + txn.chain_index;
+  document.getElementById('dPrevHash').textContent =
+    txn.prev_hash ? txn.prev_hash.slice(0, 16) + '…' + txn.prev_hash.slice(-8) : 'genesis';
+
+  // Notes
+  if (txn.notes && txn.notes.trim()) {
+    document.getElementById('notesSection').style.display = 'block';
+    document.getElementById('dNotes').textContent = txn.notes;
+  }
+
+  // Screenshot
+  if (txn.screenshot_path && txn.screenshot_path.length > 100) {
+    document.getElementById('screenshotSection').style.display = 'block';
+    document.getElementById('screenshotImg').src = txn.screenshot_path;
+  }
+
+  // QR code
+  generateQR(txn);
+
+  // Verify link
+  const verifyUrl = 'verify.html?receipt=' + encodeURIComponent(txn.receipt_number);
+  document.getElementById('verifyLink').href = verifyUrl;
+  document.getElementById('verifyReceiptSpan').textContent = txn.receipt_number;
+
+  // Thermal template
+  buildThermalTemplate(txn);
+}
+
+// ── QR CODE ───────────────────────────────────────────────
+function generateQR(txn) {
+  // Support both old canvas target and new div target
+  const container = document.getElementById('qr-container') || document.getElementById('qrCanvas');
+  if (!container) return;
+
+  // Clear previous content
+  if (container.tagName === 'CANVAS') {
+    const ctx = container.getContext('2d');
+    ctx.clearRect(0, 0, container.width, container.height);
+  } else {
+    container.innerHTML = '';
+  }
+
+  const qrContent = `DEMS-VERIFY|${txn.receipt_number}|${txn.hash}`;
+
+  try {
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(container, {
+        text         : qrContent,
+        width        : 160,
+        height       : 160,
+        colorDark    : '#0EA5E9',
+        colorLight   : '#080F1C',
+        correctLevel : QRCode.CorrectLevel.M
+      });
+    } else {
+      // Fallback if QRCode lib not loaded
+      if (container.tagName === 'CANVAS') {
+        const ctx = container.getContext('2d');
+        ctx.fillStyle = '#080F1C';
+        ctx.fillRect(0, 0, 160, 160);
+        ctx.fillStyle = '#0EA5E9';
+        ctx.font = '9px monospace';
+        ctx.fillText(txn.receipt_number, 4, 80);
+      }
+    }
+  } catch (e) {
+    console.warn('QR generation error:', e);
+  }
+}
+
+// ── HASH INTEGRITY VERIFY ─────────────────────────────────
+async function verifyIntegrity(txn) {
+  const banner = document.getElementById('integrityBanner');
+
+  try {
+    const result = await HashEngine.verifyByReceiptNumber(txn.receipt_number);
+
+    if (result.intact) {
+      banner.className = 'integrity-banner ok';
+      banner.innerHTML = `
+        <div class="integrity-icon">✅</div>
+        <div class="integrity-text">
+          <div class="integrity-title">Original — Hash Verified</div>
+          <div class="integrity-sub">SHA-256 matches. Chain link intact. This document has NOT been tampered with.</div>
+        </div>
+      `;
+    } else {
+      banner.className = 'integrity-banner warn';
+      banner.innerHTML = `
+        <div class="integrity-icon">⚠️</div>
+        <div class="integrity-text">
+          <div class="integrity-title">WARNING — Tampering Detected</div>
+          <div class="integrity-sub">Hash mismatch detected. This record may have been modified after creation.</div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    banner.className = 'integrity-banner checking';
+    banner.innerHTML = `
+      <div class="integrity-icon">❓</div>
+      <div class="integrity-text">
+        <div class="integrity-title">Verification Unavailable</div>
+        <div class="integrity-sub">Could not verify hash at this time.</div>
+      </div>
+    `;
+  }
+}
+
+// ── THERMAL TEMPLATE ──────────────────────────────────────
+function buildThermalTemplate(txn) {
+  const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+  const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dt   = new Date(txn.timestamp);
+  const ds   = dt.toLocaleDateString('en-PK') + ' ' + dt.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', hour12: true });
+  const biz  = _profile?.business_name || 'Exchange Business';
+  const secp = _profile?.secp_number ? 'SECP: ' + _profile.secp_number : '';
+  const isBuy = txn.txn_type === 'buy';
+  const hashShort = txn.hash.slice(0, 16) + '…' + txn.hash.slice(-8);
+
+  document.getElementById('thermalPrint').innerHTML = `
+    <div class="thermal-center"><b>${biz}</b></div>
+    ${secp ? `<div class="thermal-center" style="font-size:10px;">${secp}</div>` : ''}
+    <hr class="thermal-line">
+    <div class="thermal-center" style="font-size:10px;">TRANSACTION RECEIPT</div>
+    <div class="thermal-center"><b>${txn.receipt_number}</b></div>
+    <div class="thermal-center" style="font-size:10px;">${ds}</div>
+    <hr class="thermal-line">
+    <div class="thermal-row"><span>Type:</span><span><b>${isBuy ? 'BUY' : 'SELL'}</b></span></div>
+    <div class="thermal-big">Rs. ${fmt(txn.amount_pkr)}</div>
+    <div class="thermal-row"><span>USDT:</span><span>${fmtU(txn.amount_usdt)}</span></div>
+    <div class="thermal-row"><span>Rate:</span><span>${fmt(txn.exchange_rate)} PKR</span></div>
+    ${txn.order_id ? `<div class="thermal-row"><span>Order ID:</span><span>${txn.order_id}</span></div>` : ''}
+    ${txn.client_name ? `<div class="thermal-row"><span>Client:</span><span>${txn.client_name}</span></div>` : ''}
+    ${txn.client_cnic ? `<div class="thermal-row"><span>CNIC:</span><span>${txn.client_cnic}</span></div>` : ''}
+    ${txn.bank_name ? `<div class="thermal-row"><span>Bank:</span><span>${txn.bank_name}</span></div>` : ''}
+    ${txn.bank_last4 ? `<div class="thermal-row"><span>Acct:</span><span>****${txn.bank_last4}</span></div>` : ''}
+    <hr class="thermal-line">
+    <div style="font-size:9px;"><b>SHA-256:</b></div>
+    <div style="font-size:9px;word-break:break-all;">${hashShort}</div>
+    <div style="font-size:9px;">Chain: #${txn.chain_index}</div>
+    <hr class="thermal-line">
+    <div class="thermal-center" style="font-size:9px;">Record permanently locked.</div>
+    <div class="thermal-center" style="font-size:9px;">Verify at: chain-integrity.html</div>
+    <div class="thermal-center" style="font-size:9px;">DEMS v1.0</div>
+  `;
+}
+
+// ── PRINT ─────────────────────────────────────────────────
+function printReceipt() {
+  document.body.classList.remove('thermal-mode');
+  AuditLog.add('RECEIPT_PRINTED', `Receipt: ${_receiptNumber}`);
+  // Update print count
+  DB.run(`UPDATE receipts SET print_count = print_count + 1 WHERE receipt_number = ?`, [_receiptNumber])
+    .catch(() => {});
+  window.print();
+}
+
+function printThermal() {
+  document.body.classList.add('thermal-mode');
+  AuditLog.add('RECEIPT_PRINTED_THERMAL', `Receipt: ${_receiptNumber}`);
+  window.print();
+  setTimeout(() => document.body.classList.remove('thermal-mode'), 1000);
+}
+
+// ── PDF DOWNLOAD ──────────────────────────────────────────
+async function downloadPDF() {
+  if (!_txn) { Toast.show('No receipt loaded', 'error'); return; }
+
+  try {
+    const profile = await Profile.get();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ format: 'a5', unit: 'mm' });
+
+    const txn       = _txn;
+    const bizName   = (profile && profile.businessName)  || (profile && profile.business_name)  || 'Exchange Business';
+    const secpNum   = (profile && profile.secpNumber)    || (profile && profile.secp_number)    || '';
+    const footer    = (profile && profile.receiptFooter) || 'Thank you for your business.';
+
+    const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+    const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    const dt   = new Date(txn.timestamp);
+    const dateStr = dt.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })
+                  + ' ' + dt.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    const pageW  = doc.internal.pageSize.getWidth();  // 148mm for A5
+    const marginL = 15;
+    const marginR = pageW - 15;
+    let y = 18;
+
+    // ── HEADER ───────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(bizName, marginL, y);
+    y += 7;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Digital Currency Exchange Receipt', marginL, y);
+    y += 5;
+
+    if (secpNum) {
+      doc.text('SECP Reg: ' + secpNum, marginL, y);
+      y += 5;
+    }
+
+    doc.setDrawColor(14, 165, 233);
+    doc.setLineWidth(0.4);
+    doc.line(marginL, y, marginR, y);
+    y += 7;
+
+    // ── DETAILS — label left, value right ────────────────
+    const rows = [
+      ['Receipt No:',   txn.receipt_number],
+      ['Date & Time:',  dateStr],
+      ['Type:',         txn.txn_type ? txn.txn_type.toUpperCase() : '—'],
+      ['Client:',       txn.client_name  || 'Walk-in Client'],
+      ['CNIC:',         txn.client_cnic  || '—'],
+      ['Amount PKR:',   fmt(txn.amount_pkr) + ' PKR'],
+      ['Exchange Rate:', String(txn.exchange_rate)],
+      ['Amount USDT:',  fmtU(txn.amount_usdt) + ' USDT'],
+      ['Bank:',         (txn.bank_name || '—') + (txn.bank_last4 ? ' ****' + txn.bank_last4 : '')],
+      ['Order ID:',     txn.order_id || '—']
+    ];
+
+    doc.setFontSize(9);
+    rows.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, marginL, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value), marginR, y, { align: 'right' });
+      y += 6;
+    });
+
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.2);
+    doc.line(marginL, y, marginR, y);
+    y += 7;
+
+    // ── HASH SECTION ─────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text('SHA-256 Hash:', marginL, y);
+    y += 5;
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(7);
+    doc.text(txn.hash.substring(0, 32), marginL, y);
+    y += 4;
+    doc.text(txn.hash.substring(32, 64), marginL, y);
+    y += 6;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(16, 185, 129);   // green
+    doc.text('\u2713 VERIFIED \u2014 ORIGINAL DOCUMENT', marginL, y);
+    doc.setTextColor(0, 0, 0);
+    y += 6;
+
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.2);
+    doc.line(marginL, y, marginR, y);
+    y += 8;
+
+    // ── FOOTER ───────────────────────────────────────────
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(footer, marginL, y);
+    y += 8;
+    doc.text('Authorized Signature: ___________', marginL, y);
+
+    // Save
+    doc.save(`DEMS-${txn.receipt_number}.pdf`);
+    Toast.show('✅ PDF downloaded!', 'success');
+    AuditLog.add('RECEIPT_PDF_DOWNLOAD', `Receipt: ${_receiptNumber}`);
+    DB.run(`UPDATE receipts SET share_count = share_count + 1 WHERE receipt_number = ?`, [_receiptNumber])
+      .catch(() => {});
+
+  } catch (e) {
+    console.error('PDF error:', e);
+    Toast.show('PDF generation failed: ' + e.message, 'error');
+  }
+}
+
+// ── WHATSAPP SHARE ────────────────────────────────────────
+async function shareWhatsApp() {
+  if (!_txn) { Toast.show('No receipt loaded', 'error'); return; }
+
+  const txn     = _txn;
+  const profile = await Profile.get();
+  const bizName = (profile && profile.businessName) || (profile && profile.business_name) || 'Exchange Business';
+  const secpNum = (profile && profile.secpNumber)   || (profile && profile.secp_number)   || '';
+
+  const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+  const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const dt   = new Date(txn.timestamp);
+  const dateStr = dt.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })
+                + ' ' + dt.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  const message =
+    `*${bizName}*\n`
+    + `Digital Currency Exchange Receipt\n\n`
+    + `Receipt No: ${txn.receipt_number}\n`
+    + `Date: ${dateStr}\n`
+    + `Type: ${txn.txn_type ? txn.txn_type.toUpperCase() : '—'}\n`
+    + `Client: ${txn.client_name || 'Walk-in Client'}\n`
+    + `Amount: PKR ${fmt(txn.amount_pkr)}\n`
+    + `Rate: ${txn.exchange_rate}\n`
+    + `USDT: ${fmtU(txn.amount_usdt)}\n\n`
+    + `Hash: ${txn.hash.substring(0, 32)}...\n`
+    + `\u2713 Verify: ${window.location.href}\n\n`
+    + `_${bizName}${secpNum ? ' \u2014 SECP: ' + secpNum : ''}_`;
+
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+  AuditLog.add('RECEIPT_SHARED_WHATSAPP', `Receipt: ${_receiptNumber}`);
+  DB.run(`UPDATE receipts SET share_count = share_count + 1 WHERE receipt_number = ?`, [_receiptNumber])
+    .catch(() => {});
+}
+
+// ── SHARE ─────────────────────────────────────────────────
+function openShareModal() {
+  if (!_txn) return;
+  const txn = _txn;
+  const fmt  = n => parseFloat(n).toLocaleString('en-PK');
+  const fmtU = n => parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dt   = new Date(txn.timestamp);
+  const ds   = dt.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' })
+              + ' ' + dt.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', hour12: true });
+
+  const biz  = _profile?.business_name || 'Exchange Business';
+  const isBuy = txn.txn_type === 'buy';
+
+  const msg = `*${biz} — Transaction Receipt*\n\n`
+    + `Receipt No: *${txn.receipt_number}*\n`
+    + `Type: *${isBuy ? 'BUY (PKR → USDT)' : 'SELL (USDT → PKR)'}*\n`
+    + `Amount: *Rs. ${fmt(txn.amount_pkr)}*\n`
+    + `USDT: *${fmtU(txn.amount_usdt)} USDT*\n`
+    + `Rate: *${fmt(txn.exchange_rate)} PKR/USDT*\n`
+    + `Date: *${ds}*\n`
+    + (txn.client_name ? `Client: ${txn.client_name}\n` : '')
+    + (txn.order_id ? `Order ID: ${txn.order_id}\n` : '')
+    + `\n🔒 SHA-256 Verified | Chain #${txn.chain_index}\n`
+    + `Hash: ${txn.hash.slice(0,16)}…`;
+
+  // WhatsApp
+  document.getElementById('whatsappShare').href =
+    'https://wa.me/?text=' + encodeURIComponent(msg);
+
+  // SMS
+  document.getElementById('smsShare').onclick = () => {
+    const smsBody = `${biz} Receipt ${txn.receipt_number}: Rs.${fmt(txn.amount_pkr)} ${isBuy ? 'BUY' : 'SELL'} on ${ds}. SHA-256 secured.`;
+    window.location.href = 'sms:?body=' + encodeURIComponent(smsBody);
+    closeShareModal();
+  };
+
+  // Copy text
+  document.getElementById('copyShare').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(msg);
+      Toast.show('Receipt details copied to clipboard', 'success');
+    } catch (e) {
+      Toast.show('Could not copy — please copy manually', 'error');
+    }
+    closeShareModal();
+    AuditLog.add('RECEIPT_SHARED_COPY', `Receipt: ${_receiptNumber}`);
+    DB.run(`UPDATE receipts SET share_count = share_count + 1 WHERE receipt_number = ?`, [_receiptNumber])
+      .catch(() => {});
+  };
+
+  document.getElementById('shareModal').classList.add('show');
+  AuditLog.add('RECEIPT_SHARE_OPENED', `Receipt: ${_receiptNumber}`);
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').classList.remove('show');
+}
+
+document.getElementById('closeShareModal').addEventListener('click', closeShareModal);
+document.getElementById('shareModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('shareModal')) closeShareModal();
+});
+
+// ── ERROR STATE ───────────────────────────────────────────
+function showError(title, sub) {
+  document.getElementById('stateLoading').style.display = 'none';
+  document.getElementById('stateError').style.display = 'block';
+  document.getElementById('receiptContent').style.display = 'none';
+  document.getElementById('errorTitle').textContent = title;
+  document.getElementById('errorSub').textContent = sub;
+  document.getElementById('pageSubtitle').textContent = 'Receipt not found';
+  document.getElementById('searchCard').style.display = 'block';
+}
+
+// ── SESSION TIMER ─────────────────────────────────────────
+function setupSessionTimer() {
+  function updateBadge() {
+    try {
+      const raw = localStorage.getItem('dems_session');
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      const left = Math.max(0, Math.floor((s.expiresAt - Date.now()) / 1000));
+      const m = Math.floor(left / 60);
+      const sec = left % 60;
+      const badge = document.getElementById('sessionBadge');
+      if (badge) badge.textContent = m + ':' + String(sec).padStart(2,'0');
+      if (left === 0) { Auth.logout(); window.location.href = 'login.html'; }
+    } catch (e) {}
+  }
+  updateBadge();
+  setInterval(updateBadge, 1000);
+}
+
+// ── LOGOUT ────────────────────────────────────────────────
+function setupLogout() {
+  const btn = document.getElementById('logoutBtn');
+  if (btn) btn.addEventListener('click', () => {
+    Auth.logout();
+    window.location.href = 'login.html';
+  });
+}
+
+// ── MOBILE NAV ────────────────────────────────────────────
+function setupMobileNav() {
+  const menuBtn = document.getElementById('mobileMenuBtn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileOverlay');
+  if (!menuBtn) return;
+  menuBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('show');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+}
+
+// ── TOAST NOTIFICATIONS ───────────────────────────────────
+const Toast = (() => {
+  let container = null;
+  function getContainer() {
+    if (!container) {
+      container = document.createElement('div');
+      container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;';
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+  return {
+    show(msg, type = 'info') {
+      const colors = { success: '#10B981', error: '#EF4444', info: '#0EA5E9', warn: '#F59E0B' };
+      const color  = colors[type] || colors.info;
+      const el = document.createElement('div');
+      el.style.cssText = `background:#0E1A2E;border:1px solid ${color};border-left:4px solid ${color};border-radius:10px;padding:12px 18px;font-size:13px;color:#F0F6FF;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,0.4);animation:slideIn 0.25s ease;`;
+      el.textContent = msg;
+      getContainer().appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3500);
+    }
+  };
+})();
+
+// Add slide-in animation
+const styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+document.head.appendChild(styleEl);
+</script>
+
+</body>
+</html>
